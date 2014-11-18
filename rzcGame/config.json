@@ -2,11 +2,13 @@
   "init_cfg": {
     "isLandscape": true,
     "name": "rzcGame",
-    "width": 960,
-    "height": 640,
+    "width": 1280,
+    "height": 720,
     "entry": "src/main.lua",
     "consolePort": 6010,
-    "debugPort": 0
+    "debugPort": 0,
+    "forwardConsolePort": 10089,
+    "forwardUploadPort": 10091
   },
   "simulator_screen_size": [
     {

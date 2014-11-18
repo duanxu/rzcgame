@@ -4,7 +4,6 @@ local MainScene = class("MainScene", function()
 end)
 
 function MainScene:ctor()
-    
 end
 
 function MainScene:onEnter()

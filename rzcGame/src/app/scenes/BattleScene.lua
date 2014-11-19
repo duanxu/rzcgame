@@ -39,6 +39,11 @@ function BattleScene:ctor()
     groupleft:setBg(bgname)
     self:addChild(groupleft:create())
     
+    local groupRight  = group:new()
+    groupRight:init(Group2)
+    groupRight:setBg(bgname)
+    self:addChild(groupRight:create())
+    
 end
 
 function BattleScene:createArmature(param)

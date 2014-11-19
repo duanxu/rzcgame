@@ -9,6 +9,7 @@ function Leader:ctor()
     self.soldiersData = nil
     self.x = nil
     self.y = nil
+    self.pos = nil --前排或后排
 end
 
 function Leader:init(data)
@@ -18,6 +19,7 @@ function Leader:init(data)
     self.armture:setScaleY(data.scaley)
     self.hp = data.hp
     self.hurt = data.hurt
+    self.pos = data.pos
 end
 
 

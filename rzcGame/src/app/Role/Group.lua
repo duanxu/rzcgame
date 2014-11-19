@@ -116,17 +116,17 @@ function Group:createPos(data)
 --                xpos = xpos+srx
 --                isHaveA =1
 --            end
---            if bnum>0 then
---                
---                bposx = xpos+(COL_NUM*(num-2)+1+leaderX[bcurrentNum])*srx
---            end
+            if bnum>0 then
+                
+                xpos=xpos+srx
+            end
             local jtstartPosx = xpos --团队（整合算一个团队）开始坐标
             for key, value in pairs(zz) do
                 if key ~= "A" and key~="B"  then
                     local soldierPos = 0
                     local leader = value.leader
                     if leader.pos == "A" then
-                        leader.x = jtstartPosx+(leaderX[acurrentNum]-1)*srx
+                        leader.x = jtstartPosx-srx+leaderX[acurrentNum]*scx
                         leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
                         acurrentNum = acurrentNum+1
 --                    else
@@ -152,7 +152,7 @@ function Group:createPos(data)
                     end
                     bposx = xpos
                     if leader.pos == "B" then
-                        leader.x = jtstartPosx+(COL_NUM*num+leaderX[bcurrentNum])*srx+leaderX[bcurrentNum]*scx
+                        leader.x = jtstartPosx+(COL_NUM*num)*srx+leaderX[bcurrentNum]*scx
                         leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[bcurrentNum]
                         --                    else
                         --                        leader.x = aposx

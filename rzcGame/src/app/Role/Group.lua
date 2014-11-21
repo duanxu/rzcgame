@@ -21,6 +21,8 @@ function Group:init(data)
     for num=1, TEAM_NUM do
     	local teamdata = data["team"..num]
     	if teamdata then
+        	teamdata.row = ROW_NUM
+        	teamdata.col = COL_NUM
             local t = team.new(teamdata)
             t:init()
             self:addTeam(t)
@@ -125,6 +127,8 @@ function Group:createPos(data)
                 if key ~= "A" and key~="B"  then
                     local soldierPos = 0
                     local leader = value.leader
+                    local col_num = value.data.col
+                    local row_num = value.data.col
                     if leader.pos == "A" then
                         leader.x = jtstartPosx-srx+leaderX[acurrentNum]*scx
                         leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
@@ -137,11 +141,11 @@ function Group:createPos(data)
                         print("leader",leader.x,leader.y)
                     end
                     local soldiers = value.soldiers
-                    for i=1, COL_NUM do --列
+                    for i=1, col_num do --列
                         local xxpos = xpos
                         local yypos = ypos
-                        for j=1, ROW_NUM do --行
-                            self:createArmature(soldiers[(i-1)*ROW_NUM+j].armture,xxpos,yypos)
+                        for j=1, row_num do --行
+                            self:createArmature(soldiers[(i-1)*row_num+j].armture,xxpos,yypos)
                             print("soldier",key,i,j,xxpos,yypos)
                             yypos = yypos+SPACING_COL_Y
                             xxpos = xxpos+scx
@@ -152,7 +156,7 @@ function Group:createPos(data)
                     end
                     bposx = xpos
                     if leader.pos == "B" then
-                        leader.x = jtstartPosx+(COL_NUM*num)*srx+leaderX[bcurrentNum]*scx
+                        leader.x = jtstartPosx+(col_num*num)*srx+leaderX[bcurrentNum]*scx
                         leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[bcurrentNum]
                         --                    else
                         --                        leader.x = aposx

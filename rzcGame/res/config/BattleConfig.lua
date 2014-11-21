@@ -1,3 +1,7 @@
+--资源列表(plist,png)包括路径
+
+FILE_PLIST_AND_PNG = {"tauren/tauren0.plist","tauren/tauren0.png"}
+
 --队数
 TEAM_NUM = 5
 

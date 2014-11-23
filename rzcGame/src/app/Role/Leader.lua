@@ -1,6 +1,8 @@
 
 
-local Leader = class("Leader")
+local Leader = class("Leader",function ()
+    return require("app.Role.BaseRole").new()
+end)
 function Leader:ctor()
     self.code = nil
     self.armture = nil
@@ -15,6 +17,7 @@ end
 function Leader:init(data)
     self.code = data.code
     self.armture = ccs.Armature:create(data.name)
+    self.armture:getArmatureData():retain()
     self.armture:setScaleX(data.scalex)
     self.armture:setScaleY(data.scaley)
     self.hp = data.hp

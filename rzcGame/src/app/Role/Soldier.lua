@@ -1,4 +1,6 @@
-local Soldier = class("Soldier")
+local Soldier = class("Soldier",function ()
+    return require("app.Role.BaseRole").new()
+end)
 
 function Soldier:ctor()
     self.armture =nil
@@ -9,6 +11,8 @@ function Soldier:ctor()
 end
 
 function Soldier:init(data)
+--    local aa = ccs.Armature:create(data.name)
+--    aa:getArmatureData():retain()
     self.armture = ccs.Armature:create(data.name)
     self.armture:setScaleX(data.scalex)
     self.armture:setScaleY(data.scaley)

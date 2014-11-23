@@ -1,6 +1,13 @@
---资源列表(plist,png)包括路径
+--布阵所有需要的配置（临时使用，以后将被正式的数据文件替换）
 
-FILE_PLIST_AND_PNG = {"tauren/tauren0.plist","tauren/tauren0.png"}
+--资源列表包括路径
+FILE_PLIST = {"data/tauren/tauren1.plist"}
+FILE_PNG = {"data/tauren/tauren1.png"}
+--动画文件
+FILE_CSB = {"data/tauren/tauren.csb"}
+
+--攻击顺序(team.type)
+ATK_ORDER = {2,3,1,4} 
 
 --队数
 TEAM_NUM = 5
@@ -62,63 +69,7 @@ Group1 = {
         col =4,
         type = 1 ,       --1:近 2：远1 3：远2 4骑
         leader= {
-            code = 3,
-            pos = "A",    --位置 B:前 A：后
-            name = "tauren", -- 动画名称
---            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
-            actname = 0, --开始默认播放动画索引 （nil：开始不播放）
-            atkactname = 1, -- 攻击动作索引
-            skillactname = 1, --技能动画索引
-            hp = 100,       --血
-            hurt = 1,       --伤害
-            scalex = -0.24, --缩放 负值代表翻转
-            scaley = 0.24
-        },
-        soldier = {
-            name = "tauren", -- 动画名称
---                res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
-            actname = 0, --开始默认播放动画索引 （nil：开始不播放）
-            atkactname = 1, -- 攻击动作索引
-            skillactname = 1, --技能动画索引
-            scalex = -0.24,
-            scaley = 0.24
-        }
-        
-    },
-    team3 = { --（从左面数）
-        row = 5,
-        col =4,
-        type = 1 ,       --1:近 2：远1 3：远2 4骑
-        leader= {
-            code = 5,
-            pos = "A",    --位置 B:前 A：后
-            name = "tauren", -- 动画名称
---            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
-            actname = 0, --开始默认播放动画索引 （nil：开始不播放）
-            atkactname = 1, -- 攻击动作索引
-            skillactname = 1, --技能动画索引
-            hp = 100,       --血
-            hurt = 1,       --伤害
-            scalex = -0.24, --缩放 负值代表翻转
-            scaley = 0.24
-        },
-        soldier = {
-            name = "tauren", -- 动画名称
---                res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
-            actname = 0, --开始默认播放动画索引 （nil：开始不播放）
-            atkactname = 1, -- 攻击动作索引
-            skillactname = 1, --技能动画索引
-            scalex = -0.24,
-            scaley = 0.24
-        }
-        
-    },
-     team4 = { --（从左面数）
-        row = 5,
-        col =4,
-        type = 4 ,       --1:近 2：远1 3：远2 4骑
-        leader= {
-            code = 5,
+            code = 3,   --唯一标示 集团内 不可重复
             pos = "B",    --位置 B:前 A：后
             name = "tauren", -- 动画名称
 --            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
@@ -149,7 +100,7 @@ Group2 = {
     team1= { --（从右面面数）
         row = 5,
         col = 4,
-        type = 1 ,        --1:近 2：远1 3：远2 4骑
+        type = 2 ,        --1:近 2：远1 3：远2 4骑
         leader = {
             code = 1,
             pos = "B",    --位置 B:前 A：后

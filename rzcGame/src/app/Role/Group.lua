@@ -18,6 +18,7 @@ function Group:ctor()
 end
 function Group:init(data)
     self.type = data.type
+    self.teams = nil
     for num=1, TEAM_NUM do
     	local teamdata = data["team"..num]
     	if teamdata then
@@ -138,14 +139,13 @@ function Group:createPos(data)
 --                        leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
 --                        acurrentNum = acurrentNum+1
                         self:createArmature(leader.armture,leader.x,leader.y)
-                        print("leader",leader.x,leader.y)
                     end
                     local soldiers = value.soldiers
                     for i=1, col_num do --列
                         local xxpos = xpos
                         local yypos = ypos
                         for j=1, row_num do --行
-                            self:createArmature(soldiers[(i-1)*row_num+j].armture,xxpos,yypos)
+                            self:createArmature(soldiers["c"..i.."r"..j].armture,xxpos,yypos)
                             print("soldier",key,i,j,xxpos,yypos)
                             yypos = yypos+SPACING_COL_Y
                             xxpos = xxpos+scx
@@ -210,6 +210,19 @@ end
 function Group:setType(data)
     self.type = data
 end
+
+function Group:PlayEnter(data)
+    local len = #self.zx
+    for k=len, 1,-1 do
+        local zz = self.zx[k]
+        for key, value in pairs(zz) do
+            if key ~= "A" and key~="B"  then
+                value.playEnTer(data)
+            end
+         end
+    end
+end
+
 function Group:createArmature(armture,x,y)
     armture:setPosition(cc.p(x,y)) 
     self:addChild(armture)

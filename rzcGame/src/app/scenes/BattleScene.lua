@@ -1,97 +1,95 @@
 
-require("config/BattleConfig")
-local group = require("app.Role.Group")
+require("config.PlayConfig")
+local group = require("app.Role.TestGroup")
+local scheduler = require("framework.scheduler")
 local BattleScene = class("BattleScene", function()
     return display.newScene("BattleScene")
 end)
 
 function BattleScene:ctor()
---    cc.ui.UILabel.new({
---            UILabelType = 2, text = "Hello, World", size = 64})
---        :align(display.CENTER, display.cx, display.cy)
---        :addTo(self)
+    self.round = 1
+    self.bgsize=0
     local armname = "data/tauren/tauren.csb"
     local armature = "tauren"
     local bgname = "data/bg.png"
---    local layer1 = display.newLayer()
---    self:addChild(layer1)
---    local param = {name=armature,scalex=-0.24,scaley=0.24,x=0,y=0,playIndex=1,parent = layer1}
+    local plists = FILE_PLIST
+    local pngs = FILE_PNG
+    local armnames = FILE_CSB
     
---    local scrollleft = cc.ui.UIScrollView:new()
-----    scrollleft:setContentSize(cc.size(display.cx,display.cy))
---    scrollleft:setViewRect(cc.rect(0,0,CONFIG_SCREEN_WIDTH/2,CONFIG_SCREEN_HEIGHT ))
---    scrollleft:setAnchorPoint(0,1)
---    scrollleft:setPosition(cc.p(0,0))
---    scrollleft:addScrollNode(layer1)
---    scrollleft:setDirection(scrollleft.DIRECTION_HORIZONTAL)
---    scrollleft:setBounceable(false)  -- 設置彈性效果
-    
---    self:addChild(scrollleft)
-    
+    for i=1, #plists do
+        display.addSpriteFrames(plists[i],pngs[i])
+    end
     
     local manager = ccs.ArmatureDataManager:getInstance();
+    for i=1, #armnames do
+        manager:removeArmatureFileInfo(armnames[i])
+        manager:addArmatureFileInfo(armnames[i])
+    end
+    
 --    local armname = "data/Hero/Hero.csb"
-    manager:removeArmatureFileInfo(armname)
-    manager:addArmatureFileInfo(armname)
+--    manager:removeArmatureFileInfo(armname)
+--    manager:addArmatureFileInfo(armname)
     local aa =  ccs.Armature:create(armature)
     local groupleft  = group:new()
     groupleft:init(Group1)
     groupleft:setBg(bgname)
-    self:addChild(groupleft:create())
+    groupleft:create()
+    self:addChild(groupleft)
+    self.groupLeft = groupleft
     
     local groupRight  = group:new()
     groupRight:init(Group2)
     groupRight:setBg(bgname)
-    self:addChild(groupRight:create())
+    self.bgsize = groupRight.bgSize
+    groupRight:create()
+--    transition.moveBy(right,{x=500,time=1})
+    local len = groupRight.bg:getTexture():getContentSize().width
     
-end
-
-function BattleScene:createArmature(param)
---    local xpos,ypos = FIRST_POS_X,FIRST_POS_Y
---    local pa = clone(param)
---    pa.x = xpos
---    pa.y = ypos
---    local armture = self:createArmature(pa)
---    for t=1, TEAM_NUM do  --队伍
---
---        for i=1, COL_NUM do --列
---            pa.x = xpos
---            pa.y = ypos
---            armture = self:createArmature(pa)
---            local xxpos = xpos
---            local yypos = ypos
---            for j=2, ROW_NUM do --行
---                pa.x = xxpos
---                pa.y = yypos
---                armture = self:createArmature(pa)
---                yypos = yypos+SPACING_COL_Y
---                xxpos = xxpos+SPACING_COL_X
---            end
---            xpos = xpos+SPACING_ROW_X
---            ypos = ypos+SPACING_ROW_Y
+    groupRight:setPosition(cc.p(len/2,0))
+    local time = PASS_ALL_TIME
+    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+    self:addChild(groupRight)
+    self.groupRight = groupRight
+--    local time = 0
+--    local function update(dt)
+--        time = time + 1
+--        
 --    end
---    xpos = xpos+TEAM_SPACING
 --
---    end
-
-
-    local armture = ccs.Armature:create(param.name)
-    armture:setScaleX(param.scalex)
-    armture:setScaleY(param.scaley)
-    armture:getAnimation():playWithIndex(param.playIndex)
-    armture:setPosition(cc.p(param.x,param.y))
-    local parent = param.parent
-    if parent~=nil then
-    	parent:addChild(armture)
-    else
-        self:addChild(armture)
-    end
+--    scheduler.scheduleUpdateGlobal(update)
 end
 
 function BattleScene:onEnter()
+--    transition.moveBy(left,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+--    transition.moveBy(right,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
+    self.groupRight:playEnTer({name="run",layer = self.groupRight})
+--    self.groupRight:playEnTer("run")
 end
 
 function BattleScene:onExit()
+end
+
+function BattleScene:viewRound()
+    local len = self.bgsize/2
+    self.groupLeft:setPositionX(-len+display.cx)
+    self.groupRight:setPositionX(display.cx)
+    display.newTTFLabel({
+        text = "第一回合",
+        font = "Marker Felt",
+        size = 64,
+        align = cc.TEXT_ALIGNMENT_CENTER -- 文字内部居中对齐
+    }):addTo(self):setPosition(cc.p(display.cx,display.cy))
+    
+    scheduler.performWithDelayGlobal(function()
+        self.groupLeft:spliteScreen():addTo(self)
+        self.groupRight:spliteScreen():addTo(self)
+        scheduler.performWithDelayGlobal(function()
+            self.groupLeft:battle()
+            self.groupRight:battle()
+        end,ATK_TIME)
+    end,SPLITE_SCREEN_TIME)
 end
 
 return BattleScene

@@ -55,7 +55,7 @@ function Team:playEnTer(data)
         end
       end
     sched(function (obj)
-        self.leader:playEnTer(data)    
+        self.leader:play(data)    
     end,longtime)
 --    play(self.leader)  
       
@@ -65,61 +65,19 @@ function Team:playEnTer(data)
         for j=sRow, eRow,inc do --行
 --            sched(play(soldiers["c"..i.."r"..j]),starttime+spacetime*time)
             sched(function ()
-        soldiers["c"..i.."r"..j]:playEnTer(data)    
+        soldiers["c"..i.."r"..j]:play(data)    
     end,starttime+spacetime*time)
             spacetime=spacetime+1
         end
      end
     data.starttime = starttime+spacetime*time
---    self.leader:playEnTer(data)
---    for key, value in pairs(self.soldiers) do
---        value:playEnTer(data)
---    end
-    
---    local times = 0
---    local handler1 = nil
---    local leaderNum = nil
---    local incNum = 1 
---    local num = #self.soldiers
---    local lay = data.layer
---    if self.leader.pos == "A" then
---        if lay.type == 1 then
---    	   leaderNum = 0
---        else
---           leaderNum = #self.soldiers+1
---           num = leaderNum
---           times = num
---           incNum = -1
---        end
---    else
---        if lay.type == 1 then
---            times = 1
---            leaderNum = num+1
---            num = leaderNum
---        else
---            leaderNum = num+1
---            times = leaderNum
---            incNum = -1
---        end
---    end
-----    local scheduler = cc.Director:getInstance():getScheduler()
---    handler1 = scheduler.performWithDelayGlobal(function ()
---            
-----            print("lay:getPosition",lay:getPosition())
---            local pos = lay:convertToWorldSpace(cc.p(self.x,0))
---            if pos.x <= 0 or pos.x>display.right then
---            	return
---            end
---            if times == leaderNum then
---                self.leader:playEnTer(data)
---            else
---                self.soldiers[times]:playEnTer(data)    
---            end
---            times = times+incNum
---            if times>num or times<1 then
---                scheduler:unscheduleScriptEntry(handler1)
---            end
---    end,data.spacetime)
+end
+
+function Team:act(actname)
+    local soldiers = self.soldiers
+    for key, value in pairs(soldiers) do
+    	value:play({name=actname})
+    end
 end
 
 return Team

@@ -272,6 +272,16 @@ function Group:spliteScreen()
     
 end
 
+function Group:act(type,actname)
+    local teams = self.zx[type]
+    if teams then
+        for key, value in pairs(teams) do
+            if key~="A" and key~="B" then
+                value:act(actname)
+        	end
+        end
+    end
+end
 function Group:battle()
     
 end

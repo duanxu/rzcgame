@@ -1,10 +1,10 @@
 --布阵所有需要的配置（临时使用，以后将被正式的数据文件替换）
 
 --资源列表包括路径
-FILE_PLIST = {"data/tauren/tauren1.plist"}
-FILE_PNG = {"data/tauren/tauren1.png"}
+FILE_PLIST = {"data/tauren0.plist"}
+FILE_PNG = {"data/tauren0.png"}
 --动画文件
-FILE_CSB = {"data/tauren/tauren.csb"}
+FILE_CSB = {"data/tauren(test01).csb","data/tauren(test02).csb"}
 
 --攻击顺序(team.type)
 ATK_ORDER = {2,3,1,4} 
@@ -43,7 +43,7 @@ Group1 = {
         leader= {
             code = 2,   --唯一标示 集团内 不可重复
             pos = "A",    --位置 B:前 A：后
-            name = "tauren", -- 动画名称
+            name = "tauren(test01)", -- 动画名称
 --            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
             actname = 0, --开始默认播放动画索引 （nil：开始不播放）
             atkactname = 1, -- 攻击动作索引
@@ -54,7 +54,7 @@ Group1 = {
             scaley = 0.24
         },
         soldier = {
-            name = "tauren", -- 动画名称
+            name = "tauren(test01)", -- 动画名称
 --                res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
             actname = 0, --开始默认播放动画索引 （nil：开始不播放）
             atkactname = 1, -- 攻击动作索引
@@ -71,7 +71,7 @@ Group1 = {
         leader= {
             code = 3,   --唯一标示 集团内 不可重复
             pos = "B",    --位置 B:前 A：后
-            name = "tauren", -- 动画名称
+            name = "tauren(test01)", -- 动画名称
 --            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
             actname = 0, --开始默认播放动画索引 （nil：开始不播放）
             atkactname = 1, -- 攻击动作索引
@@ -82,7 +82,7 @@ Group1 = {
             scaley = 0.24
         },
         soldier = {
-            name = "tauren", -- 动画名称
+            name = "tauren(test01)", -- 动画名称
 --                res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
             actname = 0, --开始默认播放动画索引 （nil：开始不播放）
             atkactname = 1, -- 攻击动作索引
@@ -104,7 +104,7 @@ Group2 = {
         leader = {
             code = 1,
             pos = "B",    --位置 B:前 A：后
-            name = "tauren", -- 动画名称
+            name = "tauren(test01)", -- 动画名称
 --            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
             actname = 0, --开始默认播放动画索引 （nil：开始不播放）
             atkactname = 1, -- 攻击动作索引
@@ -115,7 +115,7 @@ Group2 = {
             scaley = 0.24
         },
         soldier = {
-            name = "tauren", -- 动画名称
+            name = "tauren(test01)", -- 动画名称
 --            res = "data/tauren/tauren.csb", --资源文件名称以及资源路径res下开始
             actname = 0, --开始默认播放动画索引 （nil：开始不播放）
             atkactname = 1, -- 攻击动作索引

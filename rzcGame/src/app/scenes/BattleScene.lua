@@ -9,13 +9,13 @@ end)
 function BattleScene:ctor()
     self.round = 1
     self.bgsize=0
-    local armname = "data/tauren/tauren.csb"
-    local armature = "tauren"
+--    local armname = "data/tauren/tauren.csb"
+--    local armature = "tauren"
     local bgname = "data/bg.png"
     local plists = FILE_PLIST
     local pngs = FILE_PNG
     local armnames = FILE_CSB
-    
+    --资源加载
     for i=1, #plists do
         display.addSpriteFrames(plists[i],pngs[i])
     end
@@ -25,11 +25,7 @@ function BattleScene:ctor()
         manager:removeArmatureFileInfo(armnames[i])
         manager:addArmatureFileInfo(armnames[i])
     end
-    
---    local armname = "data/Hero/Hero.csb"
---    manager:removeArmatureFileInfo(armname)
---    manager:addArmatureFileInfo(armname)
-    local aa =  ccs.Armature:create(armature)
+    --初始化阵型
     local groupleft  = group:new()
     groupleft:init(Group1)
     groupleft:setBg(bgname)
@@ -40,32 +36,36 @@ function BattleScene:ctor()
     local groupRight  = group:new()
     groupRight:init(Group2)
     groupRight:setBg(bgname)
-    self.bgsize = groupRight.bgSize
+    local len = groupRight.bgSize
+    self.bgsize = len
     groupRight:create()
 --    transition.moveBy(right,{x=500,time=1})
-    local len = groupRight.bg:getTexture():getContentSize().width
+--    local len = groupRight.bg:getTexture():getContentSize().width
     
     groupRight:setPosition(cc.p(len/2,0))
     local time = PASS_ALL_TIME
-    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
-    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
     self:addChild(groupRight)
     self.groupRight = groupRight
---    local time = 0
---    local function update(dt)
---        time = time + 1
---        
---    end
---
---    scheduler.scheduleUpdateGlobal(update)
+    
+    
+     --测试弓箭兵 攻击
+    groupleft:spliteScreen():addTo(self)
+    groupRight:spliteScreen():addTo(self)
+    groupleft:act(2,"attack03")
+
 end
 
 function BattleScene:onEnter()
 --    transition.moveBy(left,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
 --    transition.moveBy(right,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
-    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
-    self.groupRight:playEnTer({name="run",layer = self.groupRight})
 --    self.groupRight:playEnTer("run")
+    
+--    --入场场景动画开始
+--    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+--    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+--    --入场角色动画
+--    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
+--    self.groupRight:playEnTer({name="run",layer = self.groupRight})
 end
 
 function BattleScene:onExit()

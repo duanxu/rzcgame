@@ -18,3 +18,6 @@ SPLITE_SCREEN_TIME = 1
 --分屏后 多久开始攻击
 
 ATK_TIME =1
+
+-- 箭的飞行速度
+arrow_speed = 100

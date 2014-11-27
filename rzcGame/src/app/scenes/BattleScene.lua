@@ -46,12 +46,15 @@ function BattleScene:ctor()
     local time = PASS_ALL_TIME
     self:addChild(groupRight)
     self.groupRight = groupRight
+    groupleft:setFaceToGroup(groupRight)
+    groupRight:setFaceToGroup(groupleft)
     
     
      --测试弓箭兵 攻击
     groupleft:spliteScreen():addTo(self)
     groupRight:spliteScreen():addTo(self)
     groupleft:act(2,"attack03")
+    groupRight:act(2,"attack03")
 
 end
 

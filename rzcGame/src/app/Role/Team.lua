@@ -10,10 +10,13 @@ function Team:ctor(data)
     self.leader = nil
     self.soldiers = {}
     self.x=nil
+    self.group = nil
 end
 
 function Team:init()
-    self.leader = leader:new()
+    local leader = leader:new()
+    leader.team = self
+    self.leader = leader
     self.leader:init(self.data.leader)
     local soldiers = self.soldiers
     self.type = self.data.type
@@ -22,8 +25,11 @@ function Team:init()
     for col=1, self.col do
     	for row=1,self.row do
             local so=soldier:new()
+            local code = "c"..col.."r"..row
+            so.code = code
+            so.team = self
             so:init(self.data.soldier)
-            soldiers["c"..col.."r"..row] = so
+            soldiers[code] = so
     	end
     end
 end
@@ -79,5 +85,56 @@ function Team:act(actname)
     	value:play({name=actname})
     end
 end
+function Team:getAtkLen()
+--    local sCol,eCol,sRow,eRow,inc,x
+    local x
+    local type = self.group.type
+    local center = display.cx
+    local bgSize = self.group.bgSize/2
+--    if type == 1 then
+--        sCol,eCol,sRow,eRow,inc = 1,self.col,1,self.row,1
+--    else
+--        sCol,eCol,sRow,eRow,inc = self.col,1,self.row,1,-1
+--    end
+--    for j=sRow, eRow,inc do --行
+    local so = self.soldiers["c"..self.col.."r"..self.row]
+        if so then
+        local posx = so.armture:convertToWorldSpaceAR(cc.p(0,0)).x
+            if type == 1 then
+                x = posx
+                return bgSize-x,center-x
+            else
+                x = posx+bgSize-CONFIG_SCREEN_WIDTH
+                return x,posx-center
+            end
+        end     
+--    end
+end
+function Team:getDefLen()
+--    local sCol,eCol,sRow,eRow,inc,x
+    local x
+    local type = self.group.type
+    local center = display.cx
+    local bgSize = self.group.bgSize/2
+    --    if type == 1 then
+    --        sCol,eCol,sRow,eRow,inc = 1,self.col,1,self.row,1
+    --    else
+    --        sCol,eCol,sRow,eRow,inc = self.col,1,self.row,1,-1
+    --    end
+    --    for j=sRow, eRow,inc do --行
+    local so = self.soldiers["c1r"..self.row]
+    if so then
+        local posx = so.armture:convertToWorldSpaceAR(cc.p(0,0)).x
+        if type == 1 then
+            x = posx
+            return bgSize-x,center-x
+        else
+            x = posx+bgSize-CONFIG_SCREEN_WIDTH
+            return x,posx-center
+        end
+    end     
+    --    end
+end
+
 
 return Team

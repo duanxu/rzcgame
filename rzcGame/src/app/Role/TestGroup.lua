@@ -17,6 +17,11 @@ function Group:ctor()
     --逻辑参数
     self.type = nil
     self.zx = {{B=0,A=0},{B=0,A=0},{B=0,A=0},{B=0,A=0}}
+    --飞行道具容器
+    self.flys = {}
+    self.faceToGroup = nil
+    --正在攻击队伍（用于远程飞行攻击定位，不包括平射）
+    self.atkTeam = nil
 end
 function Group:init(data)
     self.type = data.type
@@ -33,16 +38,20 @@ function Group:init(data)
     	end
     end
 end
+function Group:setFaceToGroup(group)
+	self.faceToGroup = group
+end
 function Group:create()
     if self.type == 1 then
-       self:createLeft(data)
+       self:createLeft()
     else
-        self:createRight(data)
+        self:createRight()
     end
 --    return self
 end
 function Group:addTeam(team)
     local zx = self.zx[team.type]
+    team.group = self
     zx[team.leader.pos] = zx[team.leader.pos]+1    
     zx[team.leader.code]=team
 end
@@ -51,6 +60,7 @@ function Group:removeTeam(team)
     local zx = self.zx[team.type]
     zx[team.leader.pos] = zx[team.leader.pos]-1 
     zx[team.leader.code]=nil
+    team.group = nil
 end
 
 function Group:createLeft()
@@ -147,7 +157,9 @@ function Group:createPos(data)
                         local xxpos = xpos
                         local yypos = ypos
                         for j=1, row_num do --行
-                            self:createArmature(soldiers["c"..i.."r"..j].armture,xxpos,yypos)
+                            local so = soldiers["c"..i.."r"..j]
+                            so.x = xxpos
+                            self:createArmature(so.armture,xxpos,yypos)
                             yypos = yypos+SPACING_COL_Y
                             xxpos = xxpos+scx
                             
@@ -274,13 +286,106 @@ end
 
 function Group:act(type,actname)
     local teams = self.zx[type]
-    if teams then
+    if table.nums(teams)>2 then
+        self.atkTeam = teams[#teams]
         for key, value in pairs(teams) do
             if key~="A" and key~="B" then
                 value:act(actname)
         	end
         end
+    else
+        self.view:scrollTo(display.cx,0)
     end
+end
+function Group:addFly(data)
+    local flys = self.flys
+    flys[#flys+1]=data
+end
+function Group:playFly()
+
+    local faceToGroup = self.faceToGroup
+    local flys = self.flys
+    local defOrder = DEF_ORDER
+    local speed = ARROW_SPEED
+    local horizontal = ARROW_HORIZONTAL
+    local hight = ARROW_HIGHT
+    local defteam = nil
+    for key, var in ipairs(defOrder) do
+    	local zxgroup = faceToGroup.zx[var]
+        if table.nums(zxgroup)>2 then
+            local flag = false;
+            for key1, var1 in pairs(zxgroup) do
+        		if type(key1)=="number" then
+        			defteam = var1
+        			flag = true
+        			break
+        		end
+        	end
+        	if flag then
+        		break
+        	end
+    	end
+    end
+    local scalx = ARROW_SCALE
+    local fx = 1 --单位方向
+    if self.type ==1 then
+        fx = -1
+    end
+    local facetolen,dtoClen = defteam:getDefLen() --被攻击者到中心实际距离，被攻击者到屏幕中间显示距离
+    local len,atoClen = self.atkTeam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
+    local slen = self.bgSize/2-display.cx --屏幕滚动距离
+    local result = len+facetolen        --飞行总距离
+    local time = result/speed           --飞行总时间
+    local htime = horizontal/speed      --水平飞行时间(策划需求)
+    local vtime = (time-htime)/2        --上升(下降)消耗的时间
+    local vlen = (result-horizontal)/2  --上升(下降)过程水平距离
+    local stime = slen/speed             --屏幕滚动时间
+    local passlen = dtoClen+atoClen     --通过屏幕子飞行距离
+    local passTime = passlen/speed      --通过屏幕中心时间
+    local faceStime = time-stime-passTime -- 对面屏幕滚动时间
+    local lay = self.view:getScrollNode()
+    local faceLay = faceToGroup.view:getScrollNode()
+    local sc = cc.Director:getInstance():getRunningScene()
+    lay:runAction(
+        transition.sequence({
+            cc.MoveBy:create(stime,{x=slen*fx})
+        })
+    )
+    local function face()
+        local size = faceLay:getNumberOfRunningActions()
+        if size<=0 then
+            local act = transition.sequence({
+--                    cc.DelayTime:create(stime),
+                    cc.MoveBy:create(faceStime,{x=(facetolen-dtoClen)*fx})
+                })
+            faceLay:runAction(act)
+            print("faceLay:runAction")
+        end
+    end
+    for key, var in ipairs(flys) do
+        local ar = var.ar
+        local c = var.param
+        ar:setScaleX(scalx*fx)
+        ar:getAnimation():setSpeedScale(1/time)
+        ar:getAnimation():play(c[1],0,0)
+        sc:addChild(ar,1)
+        ar:runAction(
+            cc.Spawn:create(
+                transition.sequence({
+                    transition.create(cc.MoveBy:create(vtime,{y=hight}),{easing=ARROW_ACTION_UP}),
+                    transition.create(cc.MoveBy:create(time-vtime,{y=-hight}),{easing=ARROW_ACTION_DOWN})
+                }),
+                transition.sequence({
+                    cc.DelayTime:create(stime),
+                    cc.MoveBy:create(passTime,{x=passlen*fx*-1}),
+                    cc.CallFunc:create(face)
+                })
+            )
+        )
+        
+    end
+   
+    print("playFly")
 end
 function Group:battle()
     

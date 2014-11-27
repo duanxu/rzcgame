@@ -7,7 +7,8 @@ FILE_PNG = {"data/tauren0.png"}
 FILE_CSB = {"data/tauren(test01).csb","data/tauren(test02).csb"}
 
 --攻击顺序(team.type)
-ATK_ORDER = {2,3,1,4} 
+ATK_ORDER = {2,3,1,4}
+ATK_ACT   = {"attack03","attack03","attack03","attack03"}   
 DEF_ORDER = {2,3,4,1}
 
 --队数

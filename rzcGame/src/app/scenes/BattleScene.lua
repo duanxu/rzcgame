@@ -43,7 +43,6 @@ function BattleScene:ctor()
 --    local len = groupRight.bg:getTexture():getContentSize().width
     
     groupRight:setPosition(cc.p(len/2,0))
-    local time = PASS_ALL_TIME
     self:addChild(groupRight)
     self.groupRight = groupRight
     groupleft:setFaceToGroup(groupRight)
@@ -51,10 +50,9 @@ function BattleScene:ctor()
     
     
      --测试弓箭兵 攻击
-    groupleft:spliteScreen():addTo(self)
-    groupRight:spliteScreen():addTo(self)
-    groupleft:act(2,"attack03")
-    groupRight:act(2,"attack03")
+--    groupleft:spliteScreen():addTo(self)
+--    groupRight:spliteScreen():addTo(self)
+    
 
 end
 
@@ -62,13 +60,16 @@ function BattleScene:onEnter()
 --    transition.moveBy(left,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
 --    transition.moveBy(right,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
 --    self.groupRight:playEnTer("run")
-    
---    --入场场景动画开始
---    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
---    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
---    --入场角色动画
---    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
---    self.groupRight:playEnTer({name="run",layer = self.groupRight})
+    local groupRight  = self.groupRight
+    local groupleft  = self.groupLeft
+    local len = groupRight.bgSize
+    local time = PASS_ALL_TIME
+    --入场场景动画开始
+    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+    --入场角色动画
+    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
+    self.groupRight:playEnTer({name="run",layer = self.groupRight})
 end
 
 function BattleScene:onExit()
@@ -89,10 +90,22 @@ function BattleScene:viewRound()
         self.groupLeft:spliteScreen():addTo(self)
         self.groupRight:spliteScreen():addTo(self)
         scheduler.performWithDelayGlobal(function()
-            self.groupLeft:battle()
-            self.groupRight:battle()
+            self:roundAtk()
         end,ATK_TIME)
     end,SPLITE_SCREEN_TIME)
+end
+
+function BattleScene:roundAtk()
+    local round = self.round
+    local atkorder = ATK_ORDER[round]
+    local actname = ATK_ACT[round]
+    self.groupLeft:act(atkorder,actname)
+    self.groupRight:act(atkorder,actname)
+    if round+1<=#ATK_ORDER then
+        self.round = round+1
+    else
+    	self.round = 0
+    end
 end
 
 return BattleScene

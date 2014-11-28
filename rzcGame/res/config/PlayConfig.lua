@@ -19,6 +19,9 @@ SPLITE_SCREEN_TIME = 1
 
 ATK_TIME =1
 
+--被远程攻击时队伍据屏幕中间的距离
+DEF_TO_CENTER_LEN = 200
+
 -- 箭的飞行速度
 ARROW_SPEED = 300
 

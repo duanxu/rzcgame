@@ -145,6 +145,8 @@ function Group:createPos(data)
                     if leader.pos == "A" then
                         leader.x = jtstartPosx-srx+leaderX[acurrentNum]*scx
                         leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
+                        leader.col=0
+                        leader.row=leaderX[acurrentNum]
                         acurrentNum = acurrentNum+1
 --                    else
 --                        leader.x = aposx
@@ -159,6 +161,8 @@ function Group:createPos(data)
                         for j=1, row_num do --行
                             local so = soldiers["c"..i.."r"..j]
                             so.x = xxpos
+                            so.col=i
+                            so.row=j
                             self:createArmature(so.armture,xxpos,yypos)
                             yypos = yypos+SPACING_COL_Y
                             xxpos = xxpos+scx
@@ -171,6 +175,8 @@ function Group:createPos(data)
                     if leader.pos == "B" then
                         leader.x = jtstartPosx+(col_num*num)*srx+leaderX[bcurrentNum]*scx
                         leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[bcurrentNum]
+                        leader.col=col_num+1
+                        leader.row=leaderX[bcurrentNum]
                         --                    else
                         --                        leader.x = aposx
                         --                        leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
@@ -285,7 +291,7 @@ function Group:spliteScreen()
 end
 
 function Group:act(type,actname)
-    local teams = self.zx[type]
+    local teams = self.zx[type] 
     if table.nums(teams)>2 then
         self.atkTeam = teams[#teams]
         for key, value in pairs(teams) do
@@ -309,6 +315,11 @@ function Group:playFly()
     local speed = ARROW_SPEED
     local horizontal = ARROW_HORIZONTAL
     local hight = ARROW_HIGHT
+    local row_num = ROW_NUM
+    local col_num = COL_NUM
+    local def_len = DEF_TO_CENTER_LEN
+    local row_x = SPACING_ROW_X
+    local col_x = SPACING_COL_X
     local defteam = nil
     for key, var in ipairs(defOrder) do
     	local zxgroup = faceToGroup.zx[var]
@@ -334,15 +345,19 @@ function Group:playFly()
     local facetolen,dtoClen = defteam:getDefLen() --被攻击者到中心实际距离，被攻击者到屏幕中间显示距离
     local len,atoClen = self.atkTeam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
     local slen = self.bgSize/2-display.cx --屏幕滚动距离
-    local result = len+facetolen        --飞行总距离
-    local time = result/speed           --飞行总时间
-    local htime = horizontal/speed      --水平飞行时间(策划需求)
-    local vtime = (time-htime)/2        --上升(下降)消耗的时间
-    local vlen = (result-horizontal)/2  --上升(下降)过程水平距离
     local stime = slen/speed             --屏幕滚动时间
-    local passlen = dtoClen+atoClen     --通过屏幕子飞行距离
-    local passTime = passlen/speed      --通过屏幕中心时间
-    local faceStime = time-stime-passTime -- 对面屏幕滚动时间
+    local facelen = facetolen-def_len   --对面屏幕滚动距离
+    local canlen = self.bgSize/2-display.cx
+    local flag = false
+    local inc = 0
+    if facelen>canlen then
+        inc = facelen-canlen
+    	facelen = canlen
+    	flag = true
+    end
+    local faceStime = facelen/speed -- 对面屏幕滚动时间
+    
+ 
     local lay = self.view:getScrollNode()
     local faceLay = faceToGroup.view:getScrollNode()
     local sc = cc.Director:getInstance():getRunningScene()
@@ -356,13 +371,25 @@ function Group:playFly()
         if size<=0 then
             local act = transition.sequence({
 --                    cc.DelayTime:create(stime),
-                    cc.MoveBy:create(faceStime,{x=(facetolen-dtoClen)*fx})
+                cc.MoveBy:create(faceStime,{x=(facelen)*fx})
                 })
             faceLay:runAction(act)
             print("faceLay:runAction")
         end
     end
     for key, var in ipairs(flys) do
+        local row,col = var.row,var.col
+        local olen = 2*(row_num-row)*col_x--每个校正位置
+        local result = len+facetolen+ olen  --飞行总距离
+        local time = result/speed           --飞行总时间
+        local htime = horizontal/speed      --水平飞行时间(策划需求)
+        local vtime = (time-htime)/2        --上升(下降)消耗的时间
+        local vlen = (result-horizontal)/2  --上升(下降)过程水平距离
+        local passlen = dtoClen+atoClen     --通过屏幕子飞行距离
+        local passTime = passlen/speed      --通过屏幕中心时间
+        olen = facetolen-dtoClen-facelen+olen
+        local otime = olen/speed
+        
         local ar = var.ar
         local c = var.param
         ar:setScaleX(scalx*fx)
@@ -373,12 +400,15 @@ function Group:playFly()
             cc.Spawn:create(
                 transition.sequence({
                     transition.create(cc.MoveBy:create(vtime,{y=hight}),{easing=ARROW_ACTION_UP}),
-                    transition.create(cc.MoveBy:create(time-vtime,{y=-hight}),{easing=ARROW_ACTION_DOWN})
+                    cc.MoveBy:create(htime,{x=horizontal*fx}), 
+                    transition.create(cc.MoveBy:create(vtime,{y=-hight}),{easing=ARROW_ACTION_DOWN})
                 }),
                 transition.sequence({
                     cc.DelayTime:create(stime),
                     cc.MoveBy:create(passTime,{x=passlen*fx*-1}),
-                    cc.CallFunc:create(face)
+                    cc.CallFunc:create(face),
+                    cc.DelayTime:create(faceStime),
+                    cc.MoveBy:create(otime,{x=olen*fx*-1})
                 })
             )
         )

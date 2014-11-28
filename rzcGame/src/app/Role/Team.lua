@@ -14,14 +14,14 @@ function Team:ctor(data)
 end
 
 function Team:init()
+    self.row = self.data.row
+    self.col = self.data.col
     local leader = leader:new()
     leader.team = self
     self.leader = leader
     self.leader:init(self.data.leader)
     local soldiers = self.soldiers
     self.type = self.data.type
-    self.row = self.data.row
-    self.col = self.data.col
     for col=1, self.col do
     	for row=1,self.row do
             local so=soldier:new()
@@ -81,13 +81,13 @@ end
 
 function Team:act(actname)
     local soldiers = self.soldiers
+    self.leader:play({name=actname})
     for key, value in pairs(soldiers) do
     	value:play({name=actname})
     end
 end
 function Team:getAtkLen()
 --    local sCol,eCol,sRow,eRow,inc,x
-    local x
     local type = self.group.type
     local center = display.cx
     local bgSize = self.group.bgSize/2
@@ -99,13 +99,12 @@ function Team:getAtkLen()
 --    for j=sRow, eRow,inc do --行
     local so = self.soldiers["c"..self.col.."r"..self.row]
         if so then
-        local posx = so.armture:convertToWorldSpaceAR(cc.p(0,0)).x
+        local ar = so.flyar
+        local posx = ar:getPositionX()
             if type == 1 then
-                x = posx
-                return bgSize-x,center-x
+            return bgSize-posx,center-posx
             else
-                x = posx+bgSize-CONFIG_SCREEN_WIDTH
-                return x,posx-center
+            return bgSize-CONFIG_SCREEN_WIDTH+posx,posx-center
             end
         end     
 --    end
@@ -129,7 +128,7 @@ function Team:getDefLen()
             x = posx
             return bgSize-x,center-x
         else
-            x = posx+bgSize-CONFIG_SCREEN_WIDTH
+            x = so.armture:getPositionX()
             return x,posx-center
         end
     end     

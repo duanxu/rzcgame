@@ -50,9 +50,9 @@ function BattleScene:ctor()
     
     
      --测试弓箭兵 攻击
---    groupleft:spliteScreen():addTo(self)
---    groupRight:spliteScreen():addTo(self)
-    
+    groupleft:spliteScreen():addTo(self)
+    groupRight:spliteScreen():addTo(self)
+    self:roundAtk()
 
 end
 
@@ -60,16 +60,16 @@ function BattleScene:onEnter()
 --    transition.moveBy(left,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
 --    transition.moveBy(right,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
 --    self.groupRight:playEnTer("run")
-    local groupRight  = self.groupRight
-    local groupleft  = self.groupLeft
-    local len = groupRight.bgSize
-    local time = PASS_ALL_TIME
-    --入场场景动画开始
-    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
-    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
-    --入场角色动画
-    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
-    self.groupRight:playEnTer({name="run",layer = self.groupRight})
+--    local groupRight  = self.groupRight
+--    local groupleft  = self.groupLeft
+--    local len = groupRight.bgSize
+--    local time = PASS_ALL_TIME
+--    --入场场景动画开始
+--    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+--    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
+--    --入场角色动画
+--    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
+--    self.groupRight:playEnTer({name="run",layer = self.groupRight})
 end
 
 function BattleScene:onExit()

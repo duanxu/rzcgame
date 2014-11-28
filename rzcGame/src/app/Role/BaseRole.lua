@@ -1,3 +1,4 @@
+require("config/BattleConfig")
 local BaseRole = class("BaseRole")
 
 function BaseRole:play(data)
@@ -16,13 +17,13 @@ function BaseRole:initSuper(data)
     self.armture:setScaleY(data.scaley)
     self.hp = data.hp
     self.hurt = data.hurt
-    local aa =  ccs.MovementEventType.loopComplete
+    local team = self.team
+    
+    local code = "c"..team.col.."r"..team.row
     function event(bone,param,originFrameIndex,currentFrameIndex)
         local b = loadstring("return" .. "{'fly',{'fly ax',1,1,100}}");
         local c = b()
         if c[1]=="fly" then
-            local team = self.team
-            local group = team.group
             local old = bone:getDisplayRenderNode():convertToWorldSpace(cc.p(0,0))
             local new = ccs.Armature:create("tauren(test02)")
             new:setPosition(old)
@@ -31,13 +32,18 @@ function BaseRole:initSuper(data)
 --                cc.EaseSineIn:create(cc.MoveBy:create(5, cc.p(350, -200)))
 --            })
 --            new:runAction(queue)
-            local selfcode = self.code
-            local data = {code=selfcode,param=c[2],ar=new}
+            local row = self.row
+            local col = self.col
+            self.flyar = new
+            local data = {code=selfcode,param=c[2],ar=new,row=row,col=col}
+            local group = team.group
             group:addFly(data)
-            local code = "c"..team.col.."r"..team.row
-            if code==selfcode then
+            if col==team.col and row == team.row  then
                 group:playFly()
             end
+--            if col==0 or col == team.col+1  then
+--                group:playFly()
+--            end
         end
     end
     self.armture:getAnimation():setFrameEventCallFunc(event)

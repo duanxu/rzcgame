@@ -23,7 +23,9 @@ function BaseRole:initSuper(data)
         local b = loadstring("return" .. "{'fly',{'fly ax',1,1,100}}");
         local c = b()
         if c[1]=="fly" then
-            local old = bone:getDisplayRenderNode():convertToWorldSpace(cc.p(0,0))
+            local old = bone:getDisplayRenderNode():convertToWorldSpaceAR(cc.p(0,0))
+            local oldA = bone:getArmature():convertToWorldSpaceAR(cc.p(0,0))
+--            local old = bone:getDisplayRenderNode():getNodeToWorldTransformAR()
             local new = ccs.Armature:create("tauren(test02)")
             new:setPosition(old)
 --            local queue = transition.sequence({
@@ -33,7 +35,7 @@ function BaseRole:initSuper(data)
 --            new:runAction(queue)
             local row = self.row
             local col = self.col
-            self.flyar = new
+            self.logicT.dx = old.x - oldA.x
             local data = {code=selfcode,param=c[2],ar=new,row=row,col=col,logicT=self.logicT}
             self.group:addFly(data)
         end

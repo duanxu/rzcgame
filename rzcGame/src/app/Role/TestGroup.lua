@@ -95,8 +95,8 @@ function Group:createPos(data)
 
 
     --初始化 兵的位置 添加到 layer里
-    data.fpy = FIRST_POS_Y
     data.scy = SPACING_COL_Y
+    data.fpy = FIRST_POS_Y
     local len = #self.zx
     for k=len, 1,-1 do
         local logicT = self.zx[k]
@@ -226,30 +226,41 @@ function Group:playFly()
     local def_len = DEF_TO_CENTER_LEN
     local row_x = SPACING_ROW_X
     local col_x = SPACING_COL_X
+    local bgSize = self.bgSize/2
     local defteam = nil
     for key, var in ipairs(defOrder) do
     	local zxgroup = faceToGroup.zx[var]
         if zxgroup:isAct() then
             defteam = zxgroup
+            break
     	end
     end
     local scalx = ARROW_SCALE
     local fx = 1 --单位方向
     if self.type ==1 then
         fx = -1
+    else
+        print(1)  
     end
     local facetolen,dtoClen = defteam:getDefLen() --被攻击者到中心实际距离，被攻击者到屏幕中间显示距离
-    local len,atoClen = self.atkTeam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
-    local slen = self.bgSize/2-display.cx --屏幕滚动距离
+--    facetolen = facetolen-fx*col_x*row_num
+--    dtoClen = dtoClen-fx*col_x*row_num
+    local len,atoClen,maxnum = self.atkTeam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
+    local dx = (maxnum-1)*row_x
+    len = len+dx
+    atoClen = atoClen+dx
+    local slen = bgSize-display.cx --屏幕滚动距离
     local stime = slen/speed             --屏幕滚动时间
     local facelen = facetolen-def_len   --对面屏幕滚动距离
-    local canlen = self.bgSize/2-display.cx
+    local canlen = bgSize-display.cx
     local flag = false
     local inc = 0
     if facelen>canlen then
         inc = facelen-canlen
     	facelen = canlen
     	flag = true
+    else
+        dtoClen = def_len
     end
     local faceStime = facelen/speed -- 对面屏幕滚动时间
     
@@ -274,7 +285,7 @@ function Group:playFly()
         end
     end
     for key, var in ipairs(flys) do
-        local row,col = var.row,var.col
+        local row = var.row
         local olen = 2*(row_num-row)*col_x--每个校正位置
         local result = len+facetolen+ olen  --飞行总距离
         local time = result/speed           --飞行总时间
@@ -285,8 +296,8 @@ function Group:playFly()
         local passTime = passlen/speed      --通过屏幕中心时间
         olen = facetolen-dtoClen-facelen+olen
         local otime = olen/speed
-        
         local ar = var.ar
+        print(var.row,var.col,result,olen,ar:getPositionX())
         local c = var.param
         ar:setScaleX(scalx*fx)
         ar:getAnimation():setSpeedScale(1/time)

@@ -1,7 +1,7 @@
 local LogicTeam = class("LogicTeam")
 local soldier = require("app.Role.Soldier")
 local leaderY = {2,3,1,4,0}
-local leaderX = {2,3,1,4,0}
+local leaderX = {3,4,2,5,1}
 function LogicTeam:ctor(data)
     self.A = 0
     self.B = 0
@@ -9,6 +9,7 @@ function LogicTeam:ctor(data)
     self.Bleaders = {}
     self.solders = {}
     self.num = 0 --总人数
+    self.rownum = nil --每行人数
     self.teamnum = 0 --队伍数量
     self.type = data.type
     self.data = nil -- 士兵数据
@@ -76,28 +77,31 @@ end
 function LogicTeam:prepareBattle(data)
     local xpos,ypos,scx,srx,ts,scy = data.fpx,data.fpy,data.scx,data.srx,data.ts,data.scy
     local num = self.teamnum
+    if num<=0 then
+       return nil
+    end
     local group = self.group
     local data = self.data
     local aleader = self.Aleaders
     local bleader = self.Bleaders
-    
+    local maxcol = 0
     local solders = self.solders
     local col = 1
-    if num<=0 then
-       return nil
-    end
     
     --后排hero
-    self.x = xpos
     for key, var in ipairs(aleader) do
         local leader = var.leader
-        leader.x = xpos+leaderY[key]*scx
-        leader.y = ypos+leaderY[key]*scy
+        local row = leaderX[key]
+        leader.x = xpos+(row-1)*scx
+        leader.y = ypos+(row-1)*scy
+        leader.row = row
         leader.group = group
         leader.logicT= self
         group:createArmature(leader)
+--        print(maxcol,row,"leader",leader.x,leader.y)
     end
     if #aleader>0 then
+        maxcol =maxcol+1
         col = col+1
         xpos = xpos+srx
     end
@@ -105,9 +109,9 @@ function LogicTeam:prepareBattle(data)
     --士兵
     local col_num = data.col
     local row_num = data.row
-    
     for var=1, num do
         for i=1, col_num do
+            maxcol =maxcol+1
             local yypos = ypos
             local xxpos = xpos
             for j=1, row_num do
@@ -117,10 +121,12 @@ function LogicTeam:prepareBattle(data)
                 so.y = yypos
                 so.group = group
                 so.logicT= self
+                so.row = j
                 solders["c"..col.."r"..j]=so
                 group:createArmature(so)
                 xxpos = xxpos+scx
                 yypos = yypos+scy
+--                print(maxcol,j,"so",so.x,so.y)
     		end
             col = col+1
             xpos = xpos+srx
@@ -130,45 +136,56 @@ function LogicTeam:prepareBattle(data)
     --前排hero
     for key, var in ipairs(bleader) do
         local leader = var.leader
-        leader.x = xpos+leaderY[key]*scx
-        leader.y = ypos+leaderY[key]*scy
+        local row = leaderX[key]
+        leader.x = xpos+(row-1)*scx
+        leader.y = ypos+(row-1)*scy
+        leader.row = row
         leader.group = group
         leader.logicT= self
         group:createArmature(leader)
+--        print(maxcol,row,"leader",leader.x,leader.y)
     end
+    self.x = xpos+(row_num-1)*scx
     if #bleader>0 then
+        maxcol =maxcol+1
         xpos = xpos+srx
     end
+    local rownum = {}
+    for var=1, row_num do
+        rownum[var]=maxcol
+    end
+    self.rownum = rownum
     return xpos
 end
 
 function LogicTeam:getAtkLen()
     --    local sCol,eCol,sRow,eRow,inc,x
-    local type = self.data.type
+    local type = self.group.type
     local center = display.cx
     local bgSize = self.group.bgSize/2
-    --    if type == 1 then
-    --        sCol,eCol,sRow,eRow,inc = 1,self.col,1,self.row,1
-    --    else
-    --        sCol,eCol,sRow,eRow,inc = self.col,1,self.row,1,-1
-    --    end
-    --    for j=sRow, eRow,inc do --行
-    local so = self.soldiers["c"..self.col.."r"..self.row]
-    if so then
-        local ar = so.flyar
-        local posx = ar:getPositionX()
-        if type == 1 then
-            return bgSize-posx,center-posx
-        else
-            return bgSize-CONFIG_SCREEN_WIDTH+posx,posx-center
-        end
-    end     
+    local rownum = self.rownum
+    local dx = self.dx
+    local maxnum =0 --本队剩余最大列数
+    for key, var in ipairs(rownum) do
+    	if var>maxnum then
+    		maxnum = var
+    	end
+    end
+    
+    
+    
+    local posx = self.x+dx
+    if type == 1 then
+        return bgSize-posx,center-posx,maxnum
+    else
+        return posx,posx-bgSize+CONFIG_SCREEN_WIDTH-center,maxnum
+    end
     --    end
 end
 function LogicTeam:getDefLen()
     --    local sCol,eCol,sRow,eRow,inc,x
     local x
-    local type = self.data.type
+    local type = self.group.type
     local center = display.cx
     local bgSize = self.group.bgSize/2
     --    if type == 1 then
@@ -179,9 +196,9 @@ function LogicTeam:getDefLen()
     --    for j=sRow, eRow,inc do --行
     x= self.x
     if type == 1 then
-        return bgSize-x,x
+        return bgSize-x,center-x
     else
-        return x+bgSize-CONFIG_SCREEN_WIDTH
+        return x,x-bgSize+CONFIG_SCREEN_WIDTH-center
     end
     --    end
 end

@@ -12,14 +12,13 @@ end
 function BaseRole:initSuper(data)
 --    local ar = ccs.Armature:create(data.name)
     self.armture = ccs.Armature:create(data.name)
---    self.armture:getArmatureData():retain()
     self.armture:setScaleX(data.scalex)
     self.armture:setScaleY(data.scaley)
     self.hp = data.hp
     self.hurt = data.hurt
-    local team = self.team
+--    local team = self.team
     
-    local code = "c"..team.col.."r"..team.row
+--    local code = "c"..team.col.."r"..team.row
     function event(bone,param,originFrameIndex,currentFrameIndex)
         local b = loadstring("return" .. "{'fly',{'fly ax',1,1,100}}");
         local c = b()
@@ -35,15 +34,8 @@ function BaseRole:initSuper(data)
             local row = self.row
             local col = self.col
             self.flyar = new
-            local data = {code=selfcode,param=c[2],ar=new,row=row,col=col}
-            local group = team.group
-            group:addFly(data)
-            if col==team.col and row == team.row  then
-                group:playFly()
-            end
---            if col==0 or col == team.col+1  then
---                group:playFly()
---            end
+            local data = {code=selfcode,param=c[2],ar=new,row=row,col=col,logicT=self.logicT}
+            self.group:addFly(data)
         end
     end
     self.armture:getAnimation():setFrameEventCallFunc(event)

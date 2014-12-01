@@ -99,8 +99,9 @@ function BattleScene:roundAtk()
     local round = self.round
     local atkorder = ATK_ORDER[round]
     local actname = ATK_ACT[round]
-    self.groupLeft:act(atkorder,actname)
-    self.groupRight:act(atkorder,actname)
+    local data = {name=actname}
+    self.groupLeft:act(atkorder,data)
+    self.groupRight:act(atkorder,data)
     if round+1<=#ATK_ORDER then
         self.round = round+1
     else

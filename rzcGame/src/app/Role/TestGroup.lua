@@ -8,8 +8,6 @@ require("config.PlayConfig")
 local scheduler = require("framework.scheduler")
 local team = require("app.Role.Team")
 local logicTeam = require("app.Role.LogicTeam")
-local leaderY = {2,3,1,4,0}
-local leaderX = {2,3,1,4,0}
 function Group:ctor()
     --显示参数
     self.bg = nil
@@ -17,7 +15,7 @@ function Group:ctor()
     self.view = nil
     --逻辑参数
     self.type = nil
-    self.zx = {{B=0,A=0},{B=0,A=0},{B=0,A=0},{B=0,A=0}}
+    self.zx = {}
     --飞行道具容器
     self.flys = {}
     self.faceToGroup = nil
@@ -26,6 +24,11 @@ function Group:ctor()
 end
 function Group:init(data)
     self.type = data.type
+    for var=1, 4 do
+        local logicT = logicTeam:new(data)
+        logicT.group = self
+        self.zx[var]=logicT
+    end
     for num=1, TEAM_NUM do
     	local teamdata = data["team"..num]
     	if teamdata then
@@ -51,34 +54,12 @@ function Group:create()
 --    return self
 end
 function Group:addTeam(team)
-    local zx = self.zx[team.type]
-    local pos = team.leader.pos
-    team.group = self
-    zx[pos] = zx[pos]+1
-    if #zx>0 then
-        for key, var in ipairs(zx) do
-            if var.leader.code>team.leader.code then
-                table.insert(zx,key,team)
-                return
-        	end
-        end
-        table.insert(zx,team)
-    else
-        zx[1]=team
-    end
+      team.group =self
+      self.zx[team.type]:add(team)
 end
 
 function Group:removeTeam(team)
-    local zx = self.zx[team.type]
-    local pos = team.leader.pos
-    zx[pos] = zx[pos]-1 
-    for key, var in ipairs(zx) do
-        if var.leader.code==team.leader.code then
-            table.remove(key)
-            team.group = nil
-            break
-        end
-    end
+    self.zx[team.type]:remove(team)
 end
 
 function Group:createLeft()
@@ -111,94 +92,17 @@ function Group:createPos(data)
     self:setAnchorPoint(0,0)
     self:setPosition(data.x,data.y)
     self:addChild(bg)
-    
 
---    local view = scrollview:new()
---    view:setViewRect(cc.rect(data.vx,0,display.cx,display.top ))
-----    view:setAnchorPoint(0,0)
-----    view:setPosition(data.vpos)
---    view:addScrollNode(self)
---    view:setDirection(scrollview.DIRECTION_HORIZONTAL)
---    view:setBounceable(false)  -- 設置彈性效果
-----    view:moveXY(-200,0)
---    self.view = view
 
     --初始化 兵的位置 添加到 layer里
-    local fpx,scx,srx,ts = data.fpx,data.scx,data.srx,TEAM_SPACING
-    local armture = nil
-    local xpos,ypos = fpx,FIRST_POS_Y
+    data.fpy = FIRST_POS_Y
+    data.scy = SPACING_COL_Y
     local len = #self.zx
     for k=len, 1,-1 do
-        local zz = self.zx[k]
-        local num =#zz
-        local bnum = zz.B  --前排英雄数量
-        local anum = zz.A -- 后排英雄数量
-        if num >0 then
-            local aposx = 0 --后排英雄x坐标
-            local bposx = 0 --前排英雄x坐标
-            local acurrentNum = 1 --后排英雄数量
-            local bcurrentNum = 1 --前排英雄数量
-            local isHaveA = 0 --是否有后排英雄 0 无
---            if anum>0 then
---                aposx = xpos+(leaderY[acurrentNum]-1)*srx
---                xpos = xpos+srx
---                isHaveA =1
---            end
-            local jtstartPosx = xpos --团队（整合算一个团队）开始坐标
-            if anum>0 then
-                xpos=xpos+srx
-            end
-            local aleaders = {}
-            local bleaders = {}
-            for key, value in ipairs(zz) do
-                value.x = jtstartPosx
-                local soldierPos = 0
-                local leader = value.leader
-                local col_num = value.data.col
-                local row_num = value.data.row
-                value.gc =gc
-                if leader.pos == "A" then
-                    local row = leaderX[acurrentNum]
-                    leader.x = jtstartPosx+leaderY[acurrentNum]*scx
-                    leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
-                    leader.row=row
-                    self:createArmature(leader)
-                    acurrentNum = acurrentNum+1
-                end
-                local soldiers = value.soldiers
-                for i=1, col_num do --列
-                    local xxpos = xpos
-                    local yypos = ypos
-                    for j=1, row_num do --行
-                        local so = soldiers["c"..i.."r"..j]
-                        so.x = xxpos
-                        so.y = yypos
-                        so.col=i
-                        so.row=j
-                        self:createArmature(so)
-                        yypos = yypos+SPACING_COL_Y
-                        xxpos = xxpos+scx
-                    end
-                    xpos = xpos+srx
-                    ypos = ypos+SPACING_ROW_Y
-                end
-                if leader.pos == "B" then
-                    aleaders[#aleaders+1] = leader
-                end
-            end
-            for key, leader in ipairs(aleaders) do
-            	leader.x = xpos+leaderY[bcurrentNum]*scx
-            	leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[bcurrentNum]
-                leader.row=leaderX[bcurrentNum]
-                bcurrentNum = bcurrentNum+1
-                self:createArmature(leader)
-            end
-            
-            if num>0 then
-                if bnum>0 then
-                    xpos = xpos+(ts+1)*srx
-                end
-            end
+        local logicT = self.zx[k]
+        local xpos = logicT:prepareBattle(data)
+        if xpos then
+        	data.fpx = xpos
         end
     end
 end
@@ -293,12 +197,10 @@ function Group:spliteScreen()
 end
 
 function Group:act(type,actname)
-    local teams = self.zx[type] 
-    if table.nums(teams)>2 then
-        self.atkTeam = teams[#teams]
-        for key, value in ipairs(teams) do
-             value:act(actname)
-        end
+    local logicT = self.zx[type] 
+    if logicT:isAct() then
+        self.atkTeam = logicT
+        logicT:act(actname)
     else
         self.view:scrollTo(display.cx,0)
     end
@@ -306,6 +208,10 @@ end
 function Group:addFly(data)
     local flys = self.flys
     flys[#flys+1]=data
+    local logicT = data.logicT
+    if #flys == logicT.num then
+    	self:playFly()
+    end
 end
 function Group:playFly()
 
@@ -323,7 +229,7 @@ function Group:playFly()
     local defteam = nil
     for key, var in ipairs(defOrder) do
     	local zxgroup = faceToGroup.zx[var]
-        if table.nums(zxgroup)>2 then
+        if zxgroup:isAct() then
             local flag = false;
             for key1, var1 in pairs(zxgroup) do
         		if type(key1)=="number" then

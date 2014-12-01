@@ -7,6 +7,7 @@ require("config.BattleConfig")
 require("config.PlayConfig")
 local scheduler = require("framework.scheduler")
 local team = require("app.Role.Team")
+local logicTeam = require("app.Role.LogicTeam")
 local leaderY = {2,3,1,4,0}
 local leaderX = {2,3,1,4,0}
 function Group:ctor()
@@ -51,16 +52,33 @@ function Group:create()
 end
 function Group:addTeam(team)
     local zx = self.zx[team.type]
+    local pos = team.leader.pos
     team.group = self
-    zx[team.leader.pos] = zx[team.leader.pos]+1    
-    zx[team.leader.code]=team
+    zx[pos] = zx[pos]+1
+    if #zx>0 then
+        for key, var in ipairs(zx) do
+            if var.leader.code>team.leader.code then
+                table.insert(zx,key,team)
+                return
+        	end
+        end
+        table.insert(zx,team)
+    else
+        zx[1]=team
+    end
 end
 
 function Group:removeTeam(team)
     local zx = self.zx[team.type]
-    zx[team.leader.pos] = zx[team.leader.pos]-1 
-    zx[team.leader.code]=nil
-    team.group = nil
+    local pos = team.leader.pos
+    zx[pos] = zx[pos]-1 
+    for key, var in ipairs(zx) do
+        if var.leader.code==team.leader.code then
+            table.remove(key)
+            team.group = nil
+            break
+        end
+    end
 end
 
 function Group:createLeft()
@@ -73,7 +91,6 @@ function Group:createLeft()
         fpx = FIRST_POS_X,
         scx = SPACING_COL_X,
         srx = SPACING_ROW_X,
-        ts = TEAM_SPACING,
         --背景参数
         
         bgx = 0,
@@ -81,9 +98,6 @@ function Group:createLeft()
         x = 0,
         y = 0
     }
-    
-    
-    
     self:createPos(data)
 end
 
@@ -110,13 +124,13 @@ function Group:createPos(data)
 --    self.view = view
 
     --初始化 兵的位置 添加到 layer里
-    local fpx,scx,srx,ts = data.fpx,data.scx,data.srx,data.ts
+    local fpx,scx,srx,ts = data.fpx,data.scx,data.srx,TEAM_SPACING
     local armture = nil
     local xpos,ypos = fpx,FIRST_POS_Y
     local len = #self.zx
     for k=len, 1,-1 do
         local zz = self.zx[k]
-        local num = table.nums(zz)-2
+        local num =#zz
         local bnum = zz.B  --前排英雄数量
         local anum = zz.A -- 后排英雄数量
         if num >0 then
@@ -130,69 +144,60 @@ function Group:createPos(data)
 --                xpos = xpos+srx
 --                isHaveA =1
 --            end
-            if bnum>0 then
-                
+            local jtstartPosx = xpos --团队（整合算一个团队）开始坐标
+            if anum>0 then
                 xpos=xpos+srx
             end
-            local jtstartPosx = xpos --团队（整合算一个团队）开始坐标
-            for key, value in pairs(zz) do
-                if key ~= "A" and key~="B"  then
-                    value.x = jtstartPosx
-                    local soldierPos = 0
-                    local leader = value.leader
-                    local col_num = value.data.col
-                    local row_num = value.data.row
-                    if leader.pos == "A" then
-                        leader.x = jtstartPosx-srx+leaderX[acurrentNum]*scx
-                        leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
-                        leader.col=0
-                        leader.row=leaderX[acurrentNum]
-                        acurrentNum = acurrentNum+1
---                    else
---                        leader.x = aposx
---                        leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
---                        acurrentNum = acurrentNum+1
-                        self:createArmature(leader.armture,leader.x,leader.y)
-                    end
-                    local soldiers = value.soldiers
-                    for i=1, col_num do --列
-                        local xxpos = xpos
-                        local yypos = ypos
-                        for j=1, row_num do --行
-                            local so = soldiers["c"..i.."r"..j]
-                            so.x = xxpos
-                            so.col=i
-                            so.row=j
-                            self:createArmature(so.armture,xxpos,yypos)
-                            yypos = yypos+SPACING_COL_Y
-                            xxpos = xxpos+scx
-                            
-                        end
-                        xpos = xpos+srx
-                        ypos = ypos+SPACING_ROW_Y
-                    end
-                    bposx = xpos
-                    if leader.pos == "B" then
-                        leader.x = jtstartPosx+(col_num*num)*srx+leaderX[bcurrentNum]*scx
-                        leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[bcurrentNum]
-                        leader.col=col_num+1
-                        leader.row=leaderX[bcurrentNum]
-                        --                    else
-                        --                        leader.x = aposx
-                        --                        leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
-                        --                        acurrentNum = acurrentNum+1
-                        self:createArmature(leader.armture,leader.x,leader.y)
-                        print("leader",jtstartPosx,bcurrentNum,leaderY[bcurrentNum],leader.x,leader.y)
-                        bcurrentNum = bcurrentNum+1
-                    end
+            local aleaders = {}
+            local bleaders = {}
+            for key, value in ipairs(zz) do
+                value.x = jtstartPosx
+                local soldierPos = 0
+                local leader = value.leader
+                local col_num = value.data.col
+                local row_num = value.data.row
+                value.gc =gc
+                if leader.pos == "A" then
+                    local row = leaderX[acurrentNum]
+                    leader.x = jtstartPosx+leaderY[acurrentNum]*scx
+                    leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[acurrentNum]
+                    leader.row=row
+                    self:createArmature(leader)
+                    acurrentNum = acurrentNum+1
                 end
+                local soldiers = value.soldiers
+                for i=1, col_num do --列
+                    local xxpos = xpos
+                    local yypos = ypos
+                    for j=1, row_num do --行
+                        local so = soldiers["c"..i.."r"..j]
+                        so.x = xxpos
+                        so.y = yypos
+                        so.col=i
+                        so.row=j
+                        self:createArmature(so)
+                        yypos = yypos+SPACING_COL_Y
+                        xxpos = xxpos+scx
+                    end
+                    xpos = xpos+srx
+                    ypos = ypos+SPACING_ROW_Y
+                end
+                if leader.pos == "B" then
+                    aleaders[#aleaders+1] = leader
+                end
+            end
+            for key, leader in ipairs(aleaders) do
+            	leader.x = xpos+leaderY[bcurrentNum]*scx
+            	leader.y = FIRST_POS_Y+SPACING_COL_Y*leaderY[bcurrentNum]
+                leader.row=leaderX[bcurrentNum]
+                bcurrentNum = bcurrentNum+1
+                self:createArmature(leader)
             end
             
             if num>0 then
-                if anum>0 then
-                    xpos = xpos+srx
+                if bnum>0 then
+                    xpos = xpos+(ts+1)*srx
                 end
-                xpos = xpos+ts
             end
         end
     end
@@ -209,8 +214,6 @@ function Group:createRight(data)
             fpx = tex:getContentSize().width/2-FIRST_POS_X,
             scx = -SPACING_COL_X,
             srx = -SPACING_ROW_X,
-            ts= -TEAM_SPACING,
-            
              --背景参数
         
             bgx = tex:getContentSize().width/2,
@@ -230,8 +233,9 @@ end
 function Group:setType(data)
     self.type = data
 end
-function Group:createArmature(armture,x,y)
-    armture:setPosition(cc.p(x,y)) 
+function Group:createArmature(obj)
+    local armture = obj.armture
+    armture:setPosition(cc.p(obj.x,obj.y)) 
     self:addChild(armture)
   
 end
@@ -242,25 +246,23 @@ function Group:playEnTer(data)
     data.starttime = 0
     for k=len, 1,-1 do
         local zz = self.zx[k]
-        for key, value in pairs(zz) do
-            if key ~= "A" and key~="B"  then
-                local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
-                if localPosx>0 and localPosx<display.right then
-                    value:playEnTer(data)
-                else
-                    local handle = nil
-                    handle = scheduler.scheduleUpdateGlobal(function (obj)
-                        local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
-                        if localPosx>0 and localPosx<display.right then
-                            scheduler.unscheduleGlobal(handle)
-                            value:playEnTer(data)
-                            scheduler.performWithDelayGlobal(function()
-                               local scene = cc.Director:getInstance():getRunningScene()
-                               scene:viewRound()
-                            end,data.starttime+ROUND_TIME)
-                         end    
-                    end)
-                end
+        for key, value in ipairs(zz) do
+            local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
+            if localPosx>0 and localPosx<display.right then
+                value:playEnTer(data)
+            else
+                local handle = nil
+                handle = scheduler.scheduleUpdateGlobal(function (obj)
+                    local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
+                    if localPosx>0 and localPosx<display.right then
+                        scheduler.unscheduleGlobal(handle)
+                        value:playEnTer(data)
+                        scheduler.performWithDelayGlobal(function()
+                           local scene = cc.Director:getInstance():getRunningScene()
+                           scene:viewRound()
+                        end,data.starttime+ROUND_TIME)
+                     end    
+                end)
             end
         end
     end
@@ -294,10 +296,8 @@ function Group:act(type,actname)
     local teams = self.zx[type] 
     if table.nums(teams)>2 then
         self.atkTeam = teams[#teams]
-        for key, value in pairs(teams) do
-            if key~="A" and key~="B" then
-                value:act(actname)
-        	end
+        for key, value in ipairs(teams) do
+             value:act(actname)
         end
     else
         self.view:scrollTo(display.cx,0)
@@ -416,6 +416,9 @@ function Group:playFly()
     end
    
     print("playFly")
+end
+function Group:createAllIndex(obj)
+	return obj.gc.."_"..obj.row
 end
 function Group:battle()
     

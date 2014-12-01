@@ -10,12 +10,20 @@ function Team:ctor(data)
     self.leader = nil
     self.soldiers = {}
     self.x=nil
+    self.ccol = {} --每行列数，战斗时使用
     self.group = nil
 end
 
 function Team:init()
-    self.row = self.data.row
-    self.col = self.data.col
+    local row = self.data.row
+    local col = self.data.col
+    self.col = col
+    self.row = row
+    local ccol = {}
+    for var=1, row do
+         ccol[var]= col
+    end
+    self.ccol = ccol
     local leader = leader:new()
     leader.team = self
     self.leader = leader

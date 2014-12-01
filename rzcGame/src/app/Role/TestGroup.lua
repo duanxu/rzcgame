@@ -230,17 +230,7 @@ function Group:playFly()
     for key, var in ipairs(defOrder) do
     	local zxgroup = faceToGroup.zx[var]
         if zxgroup:isAct() then
-            local flag = false;
-            for key1, var1 in pairs(zxgroup) do
-        		if type(key1)=="number" then
-        			defteam = var1
-        			flag = true
-        			break
-        		end
-        	end
-        	if flag then
-        		break
-        	end
+            defteam = zxgroup
     	end
     end
     local scalx = ARROW_SCALE

@@ -1,0 +1,1 @@
+local LogicTeam = class("LogicTeam")

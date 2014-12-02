@@ -16,7 +16,8 @@ function LogicTeam:ctor(data)
     self.group = nil
     self.x = 0  --真是坐标
     self.y = 0
-    self.dx = 0 --显示坐标
+    self.dx = 0 --偏差坐标
+    self.groupx = 0 --初始化时gourp的坐标
 end
 
 function LogicTeam:add(team)
@@ -81,6 +82,7 @@ function LogicTeam:prepareBattle(data)
        return nil
     end
     local group = self.group
+    self.groupx = group:getPositionX()
     local data = self.data
     local aleader = self.Aleaders
     local bleader = self.Bleaders
@@ -164,7 +166,10 @@ end
 
 function LogicTeam:getAtkLen()
     --    local sCol,eCol,sRow,eRow,inc,x
-    local type = self.group.type
+    local group = self.group
+    local type = group.type
+    local cgroupx = group:getPositionX()
+    local groupx = self.groupx
     local center = display.cx
     local bgSize = self.group.bgSize/2
     local rownum = self.rownum
@@ -179,10 +184,11 @@ function LogicTeam:getAtkLen()
     
     
     local posx = self.x+dx
+    local sdx = cgroupx-groupx
     if type == 1 then
-        return bgSize-posx,center-posx,maxnum
+        return bgSize-posx,-sdx,center-posx,maxnum
     else
-        return posx,posx-bgSize+CONFIG_SCREEN_WIDTH-center,maxnum
+        return posx,sdx,posx-bgSize+CONFIG_SCREEN_WIDTH-center,maxnum
     end
     --    end
 end

@@ -19,6 +19,8 @@ SPLITE_SCREEN_TIME = 1
 
 ATK_TIME =1
 
+--攻击队伍攻击时据屏幕中间的距离(达不到会尽量靠近这个值)
+ATK_TO_CENTER_LEN = 100
 --被远程攻击时队伍据屏幕中间的距离
 DEF_TO_CENTER_LEN = 200
 

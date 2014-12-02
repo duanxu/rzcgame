@@ -198,11 +198,40 @@ end
 
 function Group:act(type,actname)
     local logicT = self.zx[type] 
+    local atkTcLen = ATK_TO_CENTER_LEN
     if logicT:isAct() then
+        local len = 0
+        local sum = 0
+        local x = logicT.x
+        local disX = display.cx
+        if self.type == 1 then
+            sum = x+atkTcLen
+            if sum > disX then
+                len = display.cx-sum
+            end
+        else
+            sum = self.bgSize/2-x+atkTcLen
+            if sum> disX then
+            	len = sum-display.cx
+            end
+        end
         self.atkTeam = logicT
-        logicT:act(actname)
+        
+        self:runAction(cc.Sequence:create({
+            cc.MoveBy:create(1,cc.p(len,0)),
+            cc.CallFunc:create(function()
+                logicT:act(actname)
+            end)
+        }))
+        
     else
-        self.view:scrollTo(display.cx,0)
+        local len = 0
+        if self.type == 1 then
+        	len = display.cx-self.bgSize/2
+        else
+            len = self.bgSize/2 - display.cx
+        end
+        self.view:scrollTo(len,0)
     end
 end
 function Group:addFly(data)
@@ -245,17 +274,15 @@ function Group:playFly()
     local fx = 1 --单位方向
     if type ==1 then
         fx = -1
-    else
-        print(1)  
     end
     local facetolen,dtoClen = defteam:getDefLen() --被攻击者到中心实际距离，被攻击者到屏幕中间显示距离
 --    facetolen = facetolen-fx*col_x*row_num
 --    dtoClen = dtoClen-fx*col_x*row_num
-    local len,atoClen,maxnum = atkteam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
+    local len,sdx,atoClen,maxnum = atkteam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
     local dx = (maxnum-1)*row_x
     len = len+dx
     atoClen = atoClen+dx
-    local slen = bgSize-display.cx --屏幕滚动距离
+    local slen = bgSize-display.cx-sdx --屏幕滚动距离
     local stime = slen/speed             --屏幕滚动时间
     local facelen = facetolen-def_len   --对面屏幕滚动距离
     local canlen = bgSize-display.cx
@@ -294,14 +321,15 @@ function Group:playFly()
     local maxdefnum = #facezx
     local temp = 0
     local target = {}
+    local tar
    
     for j=defkey, maxdefnum do
         if temp>atkcmaxcol then
            break
         end
     	local lteam = facezx[j]
-            if lteam:isAct() then
-            local tar,temp = lteam:getAllDef(temp,atkcmaxcol)
+        if lteam:isAct() then
+            tar,temp = lteam:getAllDef(temp,atkcmaxcol)
             temp = temp+tx
             table.merge(target,tar)
     	end
@@ -351,15 +379,15 @@ function Group:playFly()
                             cc.ScaleBy:create(uptime,scale,scale),
                             cc.EaseSineIn:create(cc.MoveBy:create(uptime,cc.p(0,uplen)))
                         }),
-                        cc.FadeOut:create(losetime)
+--                        cc.FadeOut:create(losetime)
                    })
                    hplable:runAction(sequ)
                 else
                     tag.armture:removeFromParentAndCleanup()
-                    scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
+--                    scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
                 end
             else
-                 scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
+--                 scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
             end
         end
         ar:getAnimation():setFrameEventCallFunc(event)

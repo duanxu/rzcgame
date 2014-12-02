@@ -20,13 +20,13 @@ function BaseRole:initSuper(data)
     
 --    local code = "c"..team.col.."r"..team.row
     function event(bone,param,originFrameIndex,currentFrameIndex)
-        local b = loadstring("return" .. "{'fly',{'fly ax',1,1,100}}");
+        local b = loadstring("return" .. param);
         local c = b()
         if c[1]=="fly" then
             local old = bone:getDisplayRenderNode():convertToWorldSpaceAR(cc.p(0,0))
             local oldA = bone:getArmature():convertToWorldSpaceAR(cc.p(0,0))
 --            local old = bone:getDisplayRenderNode():getNodeToWorldTransformAR()
-            local new = ccs.Armature:create("tauren(test02)")
+            local new = ccs.Armature:create(c[2][1])
             new:setPosition(old)
 --            local queue = transition.sequence({
 --                cc.EaseSineOut:create(cc.MoveBy:create(5, cc.p(350, 200))),
@@ -35,12 +35,21 @@ function BaseRole:initSuper(data)
 --            new:runAction(queue)
             local row = self.row
             local col = self.col
-            self.logicT.dx = old.x - oldA.x
-            local data = {code=selfcode,param=c[2],ar=new,row=row,col=col,logicT=self.logicT}
+            local logicT = self.logicT
+            logicT.dx = old.x - oldA.x
+            local data = {param=c[2],ar=new,row=row,col=col,src=self,logicT = logicT}
             self.group:addFly(data)
         end
     end
     self.armture:getAnimation():setFrameEventCallFunc(event)
 end
 
+function BaseRole:subHp(value)
+    local hp = self.hp
+    if hp>0 then
+    	hp = hp -value
+        return hp
+    end
+    return 0
+end
 return BaseRole

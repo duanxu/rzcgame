@@ -69,3 +69,25 @@ ARROW_ACTION_DOWN = "sineIn"
 
 -- 箭的水平飞行距离（如果需要水平飞行一 ）
 ARROW_HORIZONTAL = 0
+--弓箭落地后没有命中多久消失
+ARROW_LOSE_TIME = 3
+
+-- 掉血设置参数
+--字体默认大小
+DEFAULT_SIZE = 20
+--字体颜色(现在是红色)
+DEFAULT_COLOR= cc.c3b(255, 0, 0)
+
+--现在播放掉血动画是向上加速运动并且放大，然后消失（这个不能修改方式，在模拟尝试后修改）
+--向上运动的时间
+UP_TIME = 1.5
+--向上运动距离
+UP_LEN = 100
+--缩放倍数
+SCALE = 3
+--变到最大后用多少时间消失
+LOSE_TIME = 1
+
+
+
+

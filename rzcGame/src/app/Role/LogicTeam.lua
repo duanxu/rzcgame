@@ -86,23 +86,24 @@ function LogicTeam:prepareBattle(data)
     local bleader = self.Bleaders
     local maxcol = 0
     local solders = self.solders
-    local col = 1
     
     --后排hero
     for key, var in ipairs(aleader) do
         local leader = var.leader
         local row = leaderX[key]
+        local col = maxcol+1
         leader.x = xpos+(row-1)*scx
         leader.y = ypos+(row-1)*scy
         leader.row = row
+        leader.col = col
         leader.group = group
         leader.logicT= self
+        solders["c"..col.."r"..row]=leader
         group:createArmature(leader)
 --        print(maxcol,row,"leader",leader.x,leader.y)
     end
     if #aleader>0 then
         maxcol =maxcol+1
-        col = col+1
         xpos = xpos+srx
     end
     
@@ -122,13 +123,13 @@ function LogicTeam:prepareBattle(data)
                 so.group = group
                 so.logicT= self
                 so.row = j
-                solders["c"..col.."r"..j]=so
+                so.col = maxcol
+                solders["c"..maxcol.."r"..j]=so
                 group:createArmature(so)
                 xxpos = xxpos+scx
                 yypos = yypos+scy
 --                print(maxcol,j,"so",so.x,so.y)
     		end
-            col = col+1
             xpos = xpos+srx
     	end
     end  
@@ -137,11 +138,14 @@ function LogicTeam:prepareBattle(data)
     for key, var in ipairs(bleader) do
         local leader = var.leader
         local row = leaderX[key]
+        local col = maxcol+1
         leader.x = xpos+(row-1)*scx
         leader.y = ypos+(row-1)*scy
         leader.row = row
+        leader.col = col
         leader.group = group
         leader.logicT= self
+        solders["c"..col.."r"..row]=leader
         group:createArmature(leader)
 --        print(maxcol,row,"leader",leader.x,leader.y)
     end
@@ -201,6 +205,41 @@ function LogicTeam:getDefLen()
         return x,x-bgSize+CONFIG_SCREEN_WIDTH-center
     end
     --    end
+end
+--获得当前最大列数
+function LogicTeam:getCurrentMaxCol()
+    local rownum = self.rownum
+    local num= #rownum
+    local cmaxcol = 0
+    for var=1, num do
+        local value = rownum[var]
+        if value>cmaxcol then
+        	cmaxcol = value
+        end
+    end
+    return cmaxcol
+end
+--查找被攻击的所有兵和英雄
+
+function LogicTeam:getAllDef(currentcol,maxcol)
+    local len = maxcol-currentcol
+    local rownum = self.rownum
+    local cmaxcol = self:getCurrentMaxCol()
+    local num= #rownum
+    local result = cmaxcol-len
+    local s,e = cmaxcol,1
+    local data = {}
+    local solders = self.solders
+    if result>0 then
+        e=result
+    end
+    for i=s, e,-1 do
+        currentcol=currentcol+1
+        for j=1, num do
+            data["c"..currentcol.."r"..j]=solders["c"..i.."r"..j]
+    	end
+    end
+    return data,currentcol
 end
 
 return LogicTeam

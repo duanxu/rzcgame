@@ -216,7 +216,9 @@ end
 function Group:playFly()
 
     local faceToGroup = self.faceToGroup
+    local facezx = faceToGroup.zx
     local flys = self.flys
+    local type = self.type
     local defOrder = DEF_ORDER
     local speed = ARROW_SPEED
     local horizontal = ARROW_HORIZONTAL
@@ -226,18 +228,22 @@ function Group:playFly()
     local def_len = DEF_TO_CENTER_LEN
     local row_x = SPACING_ROW_X
     local col_x = SPACING_COL_X
+    local tx = TEAM_SPACING
     local bgSize = self.bgSize/2
     local defteam = nil
+    local atkteam = self.atkTeam
+    local defkey = 1 --被攻击的队伍是第几个队伍
     for key, var in ipairs(defOrder) do
-    	local zxgroup = faceToGroup.zx[var]
+        local zxgroup = facezx[var]
         if zxgroup:isAct() then
             defteam = zxgroup
+            defkey = var
             break
     	end
     end
     local scalx = ARROW_SCALE
     local fx = 1 --单位方向
-    if self.type ==1 then
+    if type ==1 then
         fx = -1
     else
         print(1)  
@@ -245,7 +251,7 @@ function Group:playFly()
     local facetolen,dtoClen = defteam:getDefLen() --被攻击者到中心实际距离，被攻击者到屏幕中间显示距离
 --    facetolen = facetolen-fx*col_x*row_num
 --    dtoClen = dtoClen-fx*col_x*row_num
-    local len,atoClen,maxnum = self.atkTeam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
+    local len,atoClen,maxnum = atkteam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
     local dx = (maxnum-1)*row_x
     len = len+dx
     atoClen = atoClen+dx
@@ -284,8 +290,24 @@ function Group:playFly()
             print("faceLay:runAction")
         end
     end
+    local atkcmaxcol = atkteam:getCurrentMaxCol() --攻击方剩余的最大列数
+    local maxdefnum = #facezx
+    local temp = 0
+    local target = {}
+   
+    for j=defkey, maxdefnum do
+        if temp>atkcmaxcol then
+           break
+        end
+    	local lteam = facezx[j]
+            if lteam:isAct() then
+            local tar,temp = lteam:getAllDef(temp,atkcmaxcol)
+            temp = temp+tx
+            table.merge(target,tar)
+    	end
+    end
     for key, var in ipairs(flys) do
-        local row = var.row
+        local row,col = var.row,var.col
         local olen = 2*(row_num-row)*col_x--每个校正位置
         local result = len+facetolen+ olen  --飞行总距离
         local time = result/speed           --飞行总时间
@@ -297,11 +319,53 @@ function Group:playFly()
         olen = facetolen-dtoClen-facelen+olen
         local otime = olen/speed
         local ar = var.ar
-        print(var.row,var.col,result,olen,ar:getPositionX())
         local c = var.param
+        local src = var.src
+        local tag = target["c"..col.."r"..row]
+        local fontsize = DEFAULT_SIZE
+        local fontcolor = DEFAULT_COLOR
+        local uptime = UP_TIME
+        local scale = SCALE
+        local uplen = UP_LEN
+        local losetime = LOSE_TIME
+        local arrowloseT = ARROW_LOSE_TIME
+        local hurt = src.hurt
+        local function arrowlose()
+            ar:removeFromParentAndCleanup()  
+        end
+        local function event(bone,param,originFrameIndex,currentFrameIndex)
+            if tag ~=nil then
+               bone:getArmature():removeFromParentAndCleanup()
+               
+                if tag:subHp(hurt)>0 then
+                   local x,y = bone:getArmature():getPosition()
+                   local hplable = display.newTTFLabel({text = hurt,
+                                        font = "Marker Felt.ttf",
+                                        size = fontsize,
+                                        color = fontcolor,
+                                        align = cc.TEXT_ALIGNMENT_CENTER -- 文字内部居中对齐
+                                        }):addTo(sc,2)
+                   hplable:setPosition(cc.p(x,y))
+                   local sequ = cc.Sequence:create({
+                        cc.Spawn:create({
+                            cc.ScaleBy:create(uptime,scale,scale),
+                            cc.EaseSineIn:create(cc.MoveBy:create(uptime,cc.p(0,uplen)))
+                        }),
+                        cc.FadeOut:create(losetime)
+                   })
+                   hplable:runAction(sequ)
+                else
+                    tag.armture:removeFromParentAndCleanup()
+                    scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
+                end
+            else
+                 scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
+            end
+        end
+        ar:getAnimation():setFrameEventCallFunc(event)
         ar:setScaleX(scalx*fx)
         ar:getAnimation():setSpeedScale(1/time)
-        ar:getAnimation():play(c[1],0,0)
+        ar:getAnimation():playWithIndex(0,0,0)
         sc:addChild(ar,1)
         ar:runAction(
             cc.Spawn:create(

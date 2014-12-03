@@ -9,6 +9,7 @@ end)
 function BattleScene:ctor()
     self.round = 1
     self.bgsize=0
+    self.over = 0
 --    local armname = "data/tauren/tauren.csb"
 --    local armature = "tauren"
     local bgname = "data/bg.png"
@@ -49,27 +50,52 @@ function BattleScene:ctor()
     groupRight:setFaceToGroup(groupleft)
     
     
-     --测试弓箭兵 攻击
-    groupleft:spliteScreen():addTo(self)
-    groupRight:spliteScreen():addTo(self)
-    self:roundAtk()
+    
 
 end
 
 function BattleScene:onEnter()
---    transition.moveBy(left,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
---    transition.moveBy(right,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
---    self.groupRight:playEnTer("run")
---    local groupRight  = self.groupRight
---    local groupleft  = self.groupLeft
---    local len = groupRight.bgSize
---    local time = PASS_ALL_TIME
---    --入场场景动画开始
---    transition.moveBy(groupleft,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
---    transition.moveBy(groupRight,{x=-len+CONFIG_SCREEN_WIDTH,time=time})
---    --入场角色动画
---    self.groupLeft:playEnTer({name="run",layer = self.groupLeft})
---    self.groupRight:playEnTer({name="run",layer = self.groupRight})
+    local groupRight  = self.groupRight
+    local groupleft  = self.groupLeft
+    groupleft.screen = self
+    groupRight.screen = self
+    
+--[[    --测试弓箭兵 攻击
+    groupleft:spliteScreen():addTo(self)
+    groupRight:spliteScreen():addTo(self)
+    self:roundAtk()
+]]-- 
+
+    local len = groupRight.bgSize/2
+    local pts = PASS_TEAM_SPEED
+    local pcs = PASS_CENTER_SPEED
+    local ptsl = groupleft.x
+    local ptsr = groupRight.x
+    
+    local ptsllen = ptsl    --摄像机通过左部队的距离
+    local ptstime = ptsl/PASS_TEAM_SPEED
+    local ptsrlen = len-groupRight.x --摄像机通过右部队的距离
+    local ptsrtime = ptsrlen/PASS_TEAM_SPEED
+    
+    local centerLen = 2*len - ptsllen -ptsrlen-CONFIG_SCREEN_WIDTH
+    local centertime = centerLen/PASS_CENTER_SPEED
+    
+    local action1 = cc.Sequence:create({
+                        cc.MoveBy:create(ptstime,cc.p(-ptsllen,0)),
+                        cc.MoveBy:create(centertime,cc.p(-centerLen,0)),
+                        cc.MoveBy:create(ptsrtime,cc.p(-ptsrlen,0))
+                    })
+    local action2 = cc.Sequence:create({
+                        cc.MoveBy:create(ptstime,cc.p(-ptsllen,0)),
+                        cc.MoveBy:create(centertime,cc.p(-centerLen,0)),
+                        cc.MoveBy:create(ptsrtime,cc.p(-ptsrlen,0))
+                    })
+    --入场场景动画开始
+    groupleft:runAction(action1)
+    groupRight:runAction(action2)
+    --入场角色动画
+    groupleft:playEnTer({name="run",layer = self.groupLeft})
+    groupRight:playEnTer({name="run",layer = self.groupRight})
 end
 
 function BattleScene:onExit()
@@ -107,6 +133,16 @@ function BattleScene:roundAtk()
     else
     	self.round = 0
     end
+end
+function BattleScene:delover()
+    self.over = self.over-1
+    if self.over ==0 then
+        self:roundAtk()
+    end
+end
+
+function BattleScene:addover()
+    self.over = self.over+1
 end
 
 return BattleScene

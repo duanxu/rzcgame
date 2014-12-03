@@ -21,6 +21,7 @@ function Group:ctor()
     self.faceToGroup = nil
     --正在攻击队伍（用于远程飞行攻击定位，不包括平射）
     self.atkTeam = nil
+    self.x = 0  --整个集团的前排的位置
 end
 function Group:init(data)
     self.type = data.type
@@ -79,7 +80,7 @@ function Group:createLeft()
         x = 0,
         y = 0
     }
-    self:createPos(data)
+    self.x = self:createPos(data)
 end
 
 function Group:createPos(data)
@@ -98,13 +99,16 @@ function Group:createPos(data)
     data.scy = SPACING_COL_Y
     data.fpy = FIRST_POS_Y
     local len = #self.zx
+    local xpos 
     for k=len, 1,-1 do
         local logicT = self.zx[k]
-        local xpos = logicT:prepareBattle(data)
-        if xpos then
-        	data.fpx = xpos
+        local x = logicT:prepareBattle(data)
+        if x then
+        	data.fpx = x
+        	xpos = x
         end
     end
+    return xpos
 end
 
 function Group:createRight(data)
@@ -126,7 +130,7 @@ function Group:createRight(data)
             y = 0
         }
 
-    self:createPos(data)
+    self.x = self:createPos(data)
 end
 
 function Group:setBg(data)
@@ -150,25 +154,45 @@ function Group:playEnTer(data)
     data.starttime = 0
     for k=len, 1,-1 do
         local zz = self.zx[k]
-        for key, value in ipairs(zz) do
-            local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
-            if localPosx>0 and localPosx<display.right then
-                value:playEnTer(data)
+        if zz:isAct() then
+           local localPosx =self:convertToWorldSpace(cc.p(zz.x ,0)).x
+           if localPosx>0 and localPosx<display.right then
+                local starttime =  zz:playEnTer(data)
+                data.starttime = starttime
             else
                 local handle = nil
                 handle = scheduler.scheduleUpdateGlobal(function (obj)
-                    local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
+                    local localPosx =self:convertToWorldSpace(cc.p(zz.x,0)).x
                     if localPosx>0 and localPosx<display.right then
                         scheduler.unscheduleGlobal(handle)
-                        value:playEnTer(data)
+                        local starttime = zz:playEnTer(data)
                         scheduler.performWithDelayGlobal(function()
-                           local scene = cc.Director:getInstance():getRunningScene()
+                           local scene = self.screen
                            scene:viewRound()
-                        end,data.starttime+ROUND_TIME)
+                        end,starttime+ROUND_TIME)
                      end    
                 end)
             end
         end
+--        for key, value in ipairs(zz) do
+--            local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
+--            if localPosx>0 and localPosx<display.right then
+--                value:playEnTer(data)
+--            else
+--                local handle = nil
+--                handle = scheduler.scheduleUpdateGlobal(function (obj)
+--                    local localPosx =self:convertToWorldSpace(cc.p(value.x,0)).x
+--                    if localPosx>0 and localPosx<display.right then
+--                        scheduler.unscheduleGlobal(handle)
+--                        value:playEnTer(data)
+--                        scheduler.performWithDelayGlobal(function()
+--                           local scene = self.screen
+--                           scene:viewRound()
+--                        end,data.starttime+ROUND_TIME)
+--                     end    
+--                end)
+--            end
+--        end
     end
 end
 function Group:playByName(index)
@@ -203,16 +227,25 @@ function Group:act(type,actname)
         local len = 0
         local sum = 0
         local x = logicT.x
+        local groupx = logicT.groupx
+        local curentX = self:getPosition()
         local disX = display.cx
         if self.type == 1 then
-            sum = x+atkTcLen
-            if sum > disX then
+            sum = x+atkTcLen-groupx+curentX
+--            if sum > disX then
                 len = display.cx-sum
+--            end
+            if curentX+len>0 then
+                len = -curentX
             end
         else
-            sum = self.bgSize/2-x+atkTcLen
-            if sum> disX then
+            sum = self.bgSize/2-x+atkTcLen-groupx+curentX
+--            if sum> disX then
             	len = sum-display.cx
+--            end
+            local bglx = CONFIG_SCREEN_WIDTH-self.bgSize/2
+            if curentX+len< bglx then
+                len = curentX-bglx
             end
         end
         self.atkTeam = logicT
@@ -223,15 +256,15 @@ function Group:act(type,actname)
                 logicT:act(actname)
             end)
         }))
-        
+        self.screen:addover()
     else
         local len = 0
         if self.type == 1 then
         	len = display.cx-self.bgSize/2
         else
-            len = self.bgSize/2 - display.cx
+            len = display.cx
         end
-        self.view:scrollTo(len,0)
+        self:setPosition(len,0)
     end
 end
 function Group:addFly(data)
@@ -240,6 +273,17 @@ function Group:addFly(data)
     local logicT = data.logicT
     if #flys == logicT.num then
     	self:playFly()
+    end
+end
+function Group:removeFly()
+    local flys = self.flys
+    table.remove(flys,1)
+    if #flys ==0 then
+        local sc = self.screen
+--        local function battleover()
+            sc:delover()
+--        end
+--        scheduler.performWithDelayGlobal(battleover,6)
     end
 end
 function Group:playFly()
@@ -255,6 +299,7 @@ function Group:playFly()
     local row_num = ROW_NUM
     local col_num = COL_NUM
     local def_len = DEF_TO_CENTER_LEN
+    local atk_Len = ATK_TO_CENTER_LEN
     local row_x = SPACING_ROW_X
     local col_x = SPACING_COL_X
     local tx = TEAM_SPACING
@@ -275,35 +320,23 @@ function Group:playFly()
     if type ==1 then
         fx = -1
     end
-    local facetolen,dtoClen = defteam:getDefLen() --被攻击者到中心实际距离，被攻击者到屏幕中间显示距离
+    local facetolen,dssl,dtc = defteam:getDefLen(def_len) --被攻击者到中心实际距离,到需求位置被攻击者屏幕需要滚动距离，据屏幕中心距离
 --    facetolen = facetolen-fx*col_x*row_num
 --    dtoClen = dtoClen-fx*col_x*row_num
-    local len,sdx,atoClen,maxnum = atkteam:getAtkLen()  --攻击者到中心实际距离，攻击者到屏幕中间显示距离
+    local len,assl,atc,maxnum = atkteam:getAtkLen(atk_Len)  --攻击者到中心实际距离,到需求位置屏幕需要滚动距离,据屏幕中心距离,最大列数，
     local dx = (maxnum-1)*row_x
     len = len+dx
-    atoClen = atoClen+dx
-    local slen = bgSize-display.cx-sdx --屏幕滚动距离
-    local stime = slen/speed             --屏幕滚动时间
-    local facelen = facetolen-def_len   --对面屏幕滚动距离
-    local canlen = bgSize-display.cx
-    local flag = false
-    local inc = 0
-    if facelen>canlen then
-        inc = facelen-canlen
-    	facelen = canlen
-    	flag = true
-    else
-        dtoClen = def_len
-    end
-    local faceStime = facelen/speed -- 对面屏幕滚动时间
+    atc = atc+dx
+    local stime = assl/speed             --屏幕滚动时间
+    local faceStime = dssl/speed         -- 对面屏幕滚动时间
     
  
     local lay = self.view:getScrollNode()
     local faceLay = faceToGroup.view:getScrollNode()
-    local sc = cc.Director:getInstance():getRunningScene()
+    local sc = self.screen
     lay:runAction(
         transition.sequence({
-            cc.MoveBy:create(stime,{x=slen*fx})
+            cc.MoveBy:create(stime,{x=assl*fx})
         })
     )
     local function face()
@@ -311,10 +344,9 @@ function Group:playFly()
         if size<=0 then
             local act = transition.sequence({
 --                    cc.DelayTime:create(stime),
-                cc.MoveBy:create(faceStime,{x=(facelen)*fx})
+                cc.MoveBy:create(faceStime,{x=dssl*fx})
                 })
             faceLay:runAction(act)
-            print("faceLay:runAction")
         end
     end
     local atkcmaxcol = atkteam:getCurrentMaxCol() --攻击方剩余的最大列数
@@ -342,9 +374,9 @@ function Group:playFly()
         local htime = horizontal/speed      --水平飞行时间(策划需求)
         local vtime = (time-htime)/2        --上升(下降)消耗的时间
         local vlen = (result-horizontal)/2  --上升(下降)过程水平距离
-        local passlen = dtoClen+atoClen     --通过屏幕子飞行距离
+        local passlen = dtc+atc             --通过屏幕子飞行距离
         local passTime = passlen/speed      --通过屏幕中心时间
-        olen = facetolen-dtoClen-facelen+olen
+--        olen = facetolen-dtc-dssl+olen
         local otime = olen/speed
         local ar = var.ar
         local c = var.param
@@ -359,7 +391,8 @@ function Group:playFly()
         local arrowloseT = ARROW_LOSE_TIME
         local hurt = src.hurt
         local function arrowlose()
-            ar:removeFromParentAndCleanup()  
+            ar:removeFromParentAndCleanup()
+            self:removeFly()  
         end
         local function event(bone,param,originFrameIndex,currentFrameIndex)
             if tag ~=nil then
@@ -379,15 +412,18 @@ function Group:playFly()
                             cc.ScaleBy:create(uptime,scale,scale),
                             cc.EaseSineIn:create(cc.MoveBy:create(uptime,cc.p(0,uplen)))
                         }),
---                        cc.FadeOut:create(losetime)
+                        cc.FadeOut:create(losetime),
+                        cc.CallFunc:create(function()
+                            self:removeFly()
+                        end)
                    })
                    hplable:runAction(sequ)
                 else
                     tag.armture:removeFromParentAndCleanup()
---                    scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
+                    scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
                 end
             else
---                 scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
+                 scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
             end
         end
         ar:getAnimation():setFrameEventCallFunc(event)

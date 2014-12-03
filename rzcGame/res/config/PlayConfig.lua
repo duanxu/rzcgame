@@ -1,11 +1,12 @@
 --游戏中关于动画和摄像头的控制参数（临时配置，以后将被正式数据文件替换）
 
---进入场景后扫过全场的速度
-
-PASS_ALL_TIME = 5
+--扫过部队的速度
+PASS_TEAM_SPEED = 100
+--扫过中场的速度
+PASS_CENTER_SPEED = 200
 
 --小兵开场动作间隔时间
-START_SOILDER_SPACE_TIME = 0.01
+START_SOILDER_SPACE_TIME = 0.1
 
 --入场动画后多久播放回合数
 
@@ -23,6 +24,9 @@ ATK_TIME =1
 ATK_TO_CENTER_LEN = 100
 --被远程攻击时队伍据屏幕中间的距离
 DEF_TO_CENTER_LEN = 200
+
+--镜头拉到队伍所需的时间（这里不能定义速度，因为2边的距离不一样会出现等另一边的现象）
+CAMERA_TO_TARGET_TIME = 1
 
 -- 箭的飞行速度
 ARROW_SPEED = 300

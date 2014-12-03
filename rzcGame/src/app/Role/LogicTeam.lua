@@ -1,5 +1,6 @@
 local LogicTeam = class("LogicTeam")
 local soldier = require("app.Role.Soldier")
+local scheduler = require("framework.scheduler")
 local leaderY = {2,3,1,4,0}
 local leaderX = {3,4,2,5,1}
 function LogicTeam:ctor(data)
@@ -75,6 +76,37 @@ function LogicTeam:act(data)
     
 end
 
+function LogicTeam:playEnTer(data)
+    local lay = self.group
+    local maxcol = self:getCurrentMaxCol()
+    local row = self.data.row
+    local soldiers = self.solders
+    local starttime = data.starttime
+    local time = data.spacetime
+    local sched = scheduler.performWithDelayGlobal
+    local sCol,eCol,sRow,eRow,inc
+    local spacetime = 1
+    if lay.type == 1 then
+        sCol,eCol,sRow,eRow,inc = 1,maxcol,1,row,1
+    else
+        sCol,eCol,sRow,eRow,inc = maxcol,1,row,1,-1
+    end
+    
+    for i=sCol, eCol,inc do --列
+        for j=sRow, eRow,inc do --行
+            --            sched(play(soldiers["c"..i.."r"..j]),starttime+spacetime*time)
+            local so = soldiers["c"..i.."r"..j]
+            if so then
+                sched(function ()
+                    so:play(data)    
+                end,starttime+spacetime*time)
+                spacetime=spacetime+1
+            
+            end
+        end
+    end
+    return starttime+spacetime*time
+end
 function LogicTeam:prepareBattle(data)
     local xpos,ypos,scx,srx,ts,scy = data.fpx,data.fpy,data.scx,data.srx,data.ts,data.scy
     local num = self.teamnum
@@ -164,7 +196,7 @@ function LogicTeam:prepareBattle(data)
     return xpos
 end
 
-function LogicTeam:getAtkLen()
+function LogicTeam:getAtkLen(data)
     --    local sCol,eCol,sRow,eRow,inc,x
     local group = self.group
     local type = group.type
@@ -182,19 +214,37 @@ function LogicTeam:getAtkLen()
     end
     
     
-    
+    local canScroll = bgSize-center
     local posx = self.x+dx
     local sdx = cgroupx-groupx
+    local atc = data
+    local screenScorolLen = canScroll
+    local sumx 
     if type == 1 then
-        return bgSize-posx,-sdx,center-posx,maxnum
+        sumx = posx+data
+        if sumx<center then
+            atc = center-posx
+        else
+            screenScorolLen = canScroll+cgroupx
+        end
+        return bgSize-posx,screenScorolLen,atc,maxnum
     else
-        return posx,sdx,posx-bgSize+CONFIG_SCREEN_WIDTH-center,maxnum
+        sumx = posx-data
+        if bgSize-sumx<center then
+            atc = posx-center
+        else
+            screenScorolLen = canScroll-sdx
+        end
+        return posx,center-cgroupx,atc,maxnum
     end
     --    end
 end
-function LogicTeam:getDefLen()
+function LogicTeam:getDefLen(data)
     --    local sCol,eCol,sRow,eRow,inc,x
     local x
+    local group = self.group
+    local cgroupx = group:getPositionX()
+    local groupx = self.groupx
     local type = self.group.type
     local center = display.cx
     local bgSize = self.group.bgSize/2
@@ -205,10 +255,27 @@ function LogicTeam:getDefLen()
     --    end
     --    for j=sRow, eRow,inc do --行
     x= self.x
+    local canScroll = bgSize-center
+    local screenScorolLen,dtc
+    dtc = data
+    local sumx 
+    screenScorolLen = canScroll
     if type == 1 then
-        return bgSize-x,center-x
+        sumx = x+data
+        if sumx<center then
+            dtc = center-x
+        else
+            screenScorolLen = canScroll-sumx+center
+        end
+        return bgSize-x,screenScorolLen,dtc
     else
-        return x,x-bgSize+CONFIG_SCREEN_WIDTH-center
+        sumx =bgSize-x+data
+        if sumx<center then
+            dtc = x-center
+        else
+            screenScorolLen=x-data
+        end
+        return x,screenScorolLen,dtc
     end
     --    end
 end

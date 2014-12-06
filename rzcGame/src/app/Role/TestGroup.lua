@@ -239,7 +239,7 @@ function Group:act(type,actname)
                 len = -curentX
             end
         else
-            sum = self.bgSize/2-x+atkTcLen-groupx+curentX
+            sum = self.bgSize/2-(x-atkTcLen-groupx+curentX)
 --            if sum> disX then
             	len = sum-display.cx
 --            end
@@ -398,7 +398,8 @@ function Group:playFly()
             if tag ~=nil then
                bone:getArmature():removeFromParentAndCleanup()
                
-                if tag:subHp(hurt)>0 then
+                if tag.hp >0 then
+                   local chp = tag:subHp(hurt)
                    local x,y = bone:getArmature():getPosition()
                    local hplable = display.newTTFLabel({text = hurt,
                                         font = "Marker Felt.ttf",
@@ -418,6 +419,9 @@ function Group:playFly()
                         end)
                    })
                    hplable:runAction(sequ)
+                   if chp<=0 then
+                        tag.armture:removeFromParentAndCleanup()
+                   end
                 else
                     tag.armture:removeFromParentAndCleanup()
                     scheduler.performWithDelayGlobal(arrowlose,arrowloseT)

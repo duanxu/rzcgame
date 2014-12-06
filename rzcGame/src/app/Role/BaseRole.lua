@@ -48,6 +48,7 @@ function BaseRole:subHp(value)
     local hp = self.hp
     if hp>0 then
     	hp = hp -value
+    	self.hp = hp
         return hp
     end
     return 0

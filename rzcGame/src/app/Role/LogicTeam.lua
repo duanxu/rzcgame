@@ -1,5 +1,6 @@
 local LogicTeam = class("LogicTeam")
 local soldier = require("app.Role.Soldier")
+local leader = require("app.Role.Leader")
 local scheduler = require("framework.scheduler")
 local leaderY = {2,3,1,4,0}
 local leaderX = {3,4,2,5,1}
@@ -22,33 +23,41 @@ function LogicTeam:ctor(data)
 end
 
 function LogicTeam:add(team)
-    local pos = team.leader.pos
+   
+    local data = team.data
+    local pos = data.leader.pos
+    local leaderCode = data.leader.code
     local leaders = self[pos.."leaders"]
     self[pos] = self[pos]+1
     self.teamnum = self.teamnum+1
     self.num = self.num+team:nums()
+    local leader = leader:new()
+    leader:init(data.leader)
     if #leaders>0 then
-    	for key, var in ipairs(leaders) do
-            if var.leader.code>team.leader.code then
-                table.insert(leaders,key,team)
+    	for key, leader in ipairs(leaders) do
+            if leader.code>leaderCode then
+                table.insert(leaders,key,leader)
                 return
             end
         end
-        table.insert(leaders,team)
+        table.insert(leaders,leader)
     else
-        leaders[1]=team
-        self.data = team.data
+        leaders[1]=leader
+        self.data = data
     end
 end
 
 function LogicTeam:remove(team)
-    local pos = team.leader.pos
+    local data = team.data
+    local leader = data.leader
+    local pos = leader.pos
     local leaders = self[pos.."leaders"]
+    local leaderCode = leader.code
     self[pos] = self[pos]-1
     self.teamnum = self.teamnum-1
     self.num = self.num-team:nums()
-    for key, var in ipairs(leaders) do
-        if var.leader.code==team.leader.code then
+    for key, leader in ipairs(leaders) do
+        if leader.code==leaderCode then
             table.remove(leaders,key)
             break
         end
@@ -67,11 +76,11 @@ function LogicTeam:act(data)
     for key, var in pairs(solders) do
         var:play(data)
     end
-    for key, var in ipairs(aleader) do
-        var.leader:play(data)
+    for key, leader in ipairs(aleader) do
+        leader:play(data)
     end
-    for key, var in ipairs(bleader) do
-        var.leader:play(data)
+    for key, leader in ipairs(bleader) do
+        leader:play(data)
     end
     
 end
@@ -122,8 +131,7 @@ function LogicTeam:prepareBattle(data)
     local solders = self.solders
     
     --后排hero
-    for key, var in ipairs(aleader) do
-        local leader = var.leader
+    for key, leader in ipairs(aleader) do
         local row = leaderX[key]
         local col = maxcol+1
         leader.x = xpos+(row-1)*scx
@@ -169,8 +177,7 @@ function LogicTeam:prepareBattle(data)
     end  
     
     --前排hero
-    for key, var in ipairs(bleader) do
-        local leader = var.leader
+    for key, leader in ipairs(bleader) do
         local row = leaderX[key]
         local col = maxcol+1
         leader.x = xpos+(row-1)*scx
@@ -295,33 +302,84 @@ function LogicTeam:getAllDef(currentcol,maxcol)
     end
     return data,currentcol
 end
-function LogicTeam:arrange()
+function LogicTeam:arrange(x,srx,scx)
+    local groupx = self.groupx
+    local currentx = self.group:getPositionX()-x+groupx
     local data = self.data
     local row_num = data.row
     local colmaxnum = self.colmaxnum
     local solders = self.solders
     local a = self.Aleaders
     local b = self.Bleaders
-    local s,e
+    local s,e = colmaxnum,1
+    local maxcol = 0
+    if x~=0 then
+    	self.x = x
+    end
     if #a>0 then
-    	s=2
+--        for key, leader in ipairs(a) do
+--            if leader.hp<=0 then
+--            	table.remove(a,key)
+--            else
+--            	local posX = leader.armture:getPositionX()
+--                leader.armture.setPositionX(posX-x)
+--            end
+--        end
+--        if #a>0 then
+--            maxcol = maxcol+1
+--        end
+    	e=2
     end
     if #b>0 then
-        e=colmaxnum-1
+        for key, leader in ipairs(b) do
+            if leader.hp<=0 then
+                table.remove(b,key)
+            else
+                local row = leader.row
+                leader.armture.setPositionX(currentx+(row_num-row)*scx)
+            end
+        end
+        if #b>0 then
+            maxcol = maxcol+1
+        end
+        s=colmaxnum-1
     end
     local maxcol =0 
     for j=1, row_num do
         local num = 0
-        for j=s, e do
-            local so = solders["c"..i.."r"..j]
-            if so.hp <= 0 then
-                num =num+1
-                local deso = table.remove(deathSo,1)
-                local newP = deso.armture:getPosition()
-                so.armture:setPosition(newP)
+        local index = s --下次查找开始索引
+        for i=s, e,-1 do
+            local code = "c"..i.."r"..j
+            local so = solders[code]
+            table.remove(solders,code)
+            if so then
+                if so.hp <= 0 or i>index then
+                    if index == 0 then
+                    	index = i-1
+                    end
+                    for var=index, e,-1 do
+                        local seachCode = "c"..var.."r"..j
+                        local new = solders[seachCode]
+                        if new then
+                            if new.hp>0 then
+                                index = var-1
+                                table.remove(solders,seachCode)
+                                new.armture:setPositionX(currentx+)
+                                solders[code] = new
+                                num = num+1
+                                break
+                            end
+                        end
+                    end
+                    
+                end
             end
     	end
+    	if num>maxcol then
+    		maxcol = num
+    	end
     end    
+    
 end
 
 return LogicTeam

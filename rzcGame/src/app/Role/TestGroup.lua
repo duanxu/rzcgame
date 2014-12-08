@@ -420,10 +420,15 @@ function Group:playFly()
                    })
                    hplable:runAction(sequ)
                    if chp<=0 then
-                        tag.armture:removeFromParentAndCleanup()
+                        local ani = tag.armture:getAnimation()
+                        ani:play("death",10,0)
+                        local function animationEvent(armatureBack,movementType,movementID)
+                              tar.logicT:removeDeath(tar)
+                              ani:removeFromParentAndCleanup()                         
+                        end
+                        ani:setMovementEventCallFunc(animationEvent)
                    end
                 else
-                    tag.armture:removeFromParentAndCleanup()
                     scheduler.performWithDelayGlobal(arrowlose,arrowloseT)
                 end
             else

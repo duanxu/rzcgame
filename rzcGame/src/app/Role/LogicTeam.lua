@@ -10,10 +10,10 @@ function LogicTeam:ctor(data)
     self.Bleaders = {}
     self.solders = {}
     self.num = 0 --总人数
-    self.rownum = nil --每行人数
+    self.colmaxnum = nil --所有行最大人数
     self.teamnum = 0 --队伍数量
     self.type = data.type
-    self.data = nil -- 士兵数据
+    self.data = nil -- 队伍数据
     self.group = nil
     self.x = 0  --真是坐标
     self.y = 0
@@ -188,11 +188,7 @@ function LogicTeam:prepareBattle(data)
         maxcol =maxcol+1
         xpos = xpos+srx
     end
-    local rownum = {}
-    for var=1, row_num do
-        rownum[var]=maxcol
-    end
-    self.rownum = rownum
+    self.colmaxnum = maxcol
     return xpos
 end
 
@@ -206,12 +202,12 @@ function LogicTeam:getAtkLen(data)
     local bgSize = self.group.bgSize/2
     local rownum = self.rownum
     local dx = self.dx
-    local maxnum =0 --本队剩余最大列数
-    for key, var in ipairs(rownum) do
-    	if var>maxnum then
-    		maxnum = var
-    	end
-    end
+    local maxnum =self.colmaxnum --本队剩余最大列数
+--    for key, var in ipairs(rownum) do
+--    	if var>maxnum then
+--    		maxnum = var
+--    	end
+--    end
     
     
     local canScroll = bgSize-center
@@ -248,12 +244,6 @@ function LogicTeam:getDefLen(data)
     local type = self.group.type
     local center = display.cx
     local bgSize = self.group.bgSize/2
-    --    if type == 1 then
-    --        sCol,eCol,sRow,eRow,inc = 1,self.col,1,self.row,1
-    --    else
-    --        sCol,eCol,sRow,eRow,inc = self.col,1,self.row,1,-1
-    --    end
-    --    for j=sRow, eRow,inc do --行
     x= self.x
     local canScroll = bgSize-center
     local screenScorolLen,dtc
@@ -281,24 +271,15 @@ function LogicTeam:getDefLen(data)
 end
 --获得当前最大列数
 function LogicTeam:getCurrentMaxCol()
-    local rownum = self.rownum
-    local num= #rownum
-    local cmaxcol = 0
-    for var=1, num do
-        local value = rownum[var]
-        if value>cmaxcol then
-        	cmaxcol = value
-        end
-    end
-    return cmaxcol
+    return self.colmaxnum
 end
 --查找被攻击的所有兵和英雄
 
 function LogicTeam:getAllDef(currentcol,maxcol)
     local len = maxcol-currentcol
-    local rownum = self.rownum
+    local colmaxnum = self.colmaxnum
     local cmaxcol = self:getCurrentMaxCol()
-    local num= #rownum
+    local num= self.data.row
     local result = cmaxcol-len
     local s,e = cmaxcol,1
     local data = {}
@@ -313,6 +294,34 @@ function LogicTeam:getAllDef(currentcol,maxcol)
     	end
     end
     return data,currentcol
+end
+function LogicTeam:arrange()
+    local data = self.data
+    local row_num = data.row
+    local colmaxnum = self.colmaxnum
+    local solders = self.solders
+    local a = self.Aleaders
+    local b = self.Bleaders
+    local s,e
+    if #a>0 then
+    	s=2
+    end
+    if #b>0 then
+        e=colmaxnum-1
+    end
+    local maxcol =0 
+    for j=1, row_num do
+        local num = 0
+        for j=s, e do
+            local so = solders["c"..i.."r"..j]
+            if so.hp <= 0 then
+                num =num+1
+                local deso = table.remove(deathSo,1)
+                local newP = deso.armture:getPosition()
+                so.armture:setPosition(newP)
+            end
+    	end
+    end    
 end
 
 return LogicTeam
